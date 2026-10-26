@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
+<html lang="ar" dir="rtl" >
 <head>
+  
+
   <meta name="google-site-verification" content="RqoCKwKT8u3r1k3w45Gj_4R_pL_2yP8jG7rRW_RKGUo" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -22,59 +24,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
   <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- React & Babel Framework scripts for SPA -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- React / ReactDOM / Babel (pinned versions) -->
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+
+  <!-- Supabase client (UMD, no import map needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
   <!-- Custom Tailwind Config for Gold & Dark Charcoal Theme -->
+ 
   <script>
-  import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'https://cusqowujugaccgzxzebg.supabase.co/rest/v1/'
-const supabaseAnonKey = 'sb_publishable_x9qrmULDUHciSDkAVMIDdQ_hKHJBW7C'
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-async function fetchBookings() {
-  const { data, error } = await supabase
-    .from('bookings')
-    .select('*, clients(*), services(*)')
-    
-  if (error) {
-    console.error('Error fetching bookings:', error)
-  } else {
-    console.log('Bookings:', data)
-  }
-}
-
-fetchBookings()
-
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            gold: {
-              300: '#f3e5ab',
-              400: '#e6ca65',
-              500: '#d4af37',
-              600: '#aa8c2c',
-              700: '#806921',
-            },
-            dark: {
-              900: '#0c0d0e',
-              800: '#141619',
-              700: '#1e2227',
-              600: '#2a2f37',
-            }
+            gold: { 300: '#f3e5ab', 400: '#e6ca65', 500: '#d4af37', 600: '#aa8c2c', 700: '#806921' },
+            dark: { 900: '#0c0d0e', 800: '#141619', 700: '#1e2227', 600: '#2a2f37' }
           },
-          fontFamily: {
-            cairo: ['Cairo', 'sans-serif'],
-            tajawal: ['Tajawal', 'sans-serif'],
-          }
+          fontFamily: { cairo: ['Cairo', 'sans-serif'], tajawal: ['Tajawal', 'sans-serif'] }
         }
       }
     }
@@ -147,29 +118,267 @@ fetchBookings()
   </style>
 </head>
 <body class="bg-dark-900 text-gray-100 antialiased selection:bg-gold-500 selection:text-dark-900">
-  <div id="root"></div>
+  <div id="root"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#d4af37;font-family:Cairo,sans-serif;font-size:18px">جاري التحميل...</div></div>
 
   <!-- React Logic Script -->
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
-  // Add this below line 154
-const [bookings, setBookings] = useState([]);
-async function fetchBookings() {
-  const { data, error } = await supabase
-    .from('bookings')
-    .select('*, clients(*), services(*)');
+  // --- Supabase (read-only, same project & tables; schema untouched) ---
+    const SUPABASE_URL = 'https://cusqowujugaccgzxzebg.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_x9qrmULDUHciSDkAVMIDdQ_hKHJBW7C';
+    let sb = null;
+    try {
+      if (window.supabase && window.supabase.createClient) {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) { console.warn('Supabase init failed:', e); }
 
-  if (error) {
-    console.error('Error fetching bookings:', error);
-  } else {
-    setBookings(data);
-  }
-}
+    // --- DB layer: online bookings via Supabase (auto-detects column names) ---
+    const DB = (() => {
+      const AR2EN = { 'معلق': 'pending', 'مؤكد': 'confirmed', 'مكتمل': 'completed', 'ملغي': 'cancelled' };
+      const EN2AR = { pending: 'معلق', confirmed: 'مؤكد', completed: 'مكتمل', cancelled: 'ملغي', canceled: 'ملغي' };
+      const state = { statusStyle: null, schemaPromise: null, servicesCache: null };
+      const errMsg = (e) => (e && (e.message || e.details || e.hint)) ? [e.message, e.hint].filter(Boolean).join(' - ') : String(e);
 
-useEffect(() => {
-  fetchBookings();
-}, []);
+      const pick = (props, list, fallback) => {
+        if (!props) return fallback || null;
+        const keys = Object.keys(props);
+        for (const c of list) { const k = keys.find(x => x.toLowerCase() === c); if (k) return k; }
+        return null;
+      };
 
+      function loadSchema() {
+        if (state.schemaPromise) return state.schemaPromise;
+        state.schemaPromise = (async () => {
+          const out = { tables: {}, errors: {} };
+          try {
+            const r = await fetch(SUPABASE_URL + '/rest/v1/', { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY } });
+            if (r.ok) {
+              const j = await r.json();
+              const defs = j.definitions || (j.components && j.components.schemas) || {};
+              ['bookings', 'clients', 'services'].forEach(t => { if (defs[t] && defs[t].properties) out.tables[t] = defs[t].properties; });
+            }
+          } catch (e) { /* OpenAPI not available - fall back to probing */ }
+          for (const t of ['bookings', 'clients', 'services']) {
+            if (out.tables[t]) continue;
+            try {
+              const { data, error } = await sb.from(t).select('*').limit(1);
+              if (error) out.errors[t] = errMsg(error);
+              else if (data && data[0]) out.tables[t] = Object.fromEntries(Object.keys(data[0]).map(k => [k, {}]));
+            } catch (e) { out.errors[t] = errMsg(e); }
+          }
+          return out;
+        })();
+        return state.schemaPromise;
+      }
+
+      function maps(schema) {
+        const bp = schema.tables.bookings, cp = schema.tables.clients, sp = schema.tables.services;
+        const b = {
+          clientId: pick(bp, ['client_id', 'customer_id'], 'client_id'),
+          serviceId: pick(bp, ['service_id'], 'service_id'),
+          date: pick(bp, ['booking_date', 'date', 'appointment_date', 'day'], 'booking_date'),
+          time: pick(bp, ['booking_time', 'time', 'appointment_time'], 'booking_time'),
+          ts: pick(bp, ['scheduled_at', 'appointment_at', 'booking_at', 'start_at', 'starts_at', 'start_time', 'datetime', 'date_time', 'booked_at'], null),
+          status: pick(bp, ['status', 'state'], 'status'),
+          notes: pick(bp, ['notes', 'note', 'comments'], bp ? null : 'notes'),
+          price: pick(bp, ['price', 'total', 'amount', 'total_price'], null),
+          name: pick(bp, ['customer_name', 'client_name'], null),
+          phone: pick(bp, ['customer_phone', 'client_phone'], null),
+          serviceName: pick(bp, ['service_name'], null),
+          createdAt: pick(bp, ['created_at'], null)
+        };
+        if (bp && b.date && b.time === null) b.time = null;
+        if (bp && b.ts && !pick(bp, ['booking_date', 'date', 'appointment_date', 'day'], null)) { b.date = null; b.time = null; }
+        const c = {
+          name: pick(cp, ['name', 'full_name', 'customer_name'], 'name'),
+          phone: pick(cp, ['phone', 'mobile', 'phone_number'], 'phone')
+        };
+        const s = { name: pick(sp, ['name', 'title', 'service_name'], 'name') };
+        return { b, c, s, bp };
+      }
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const normStatus = (v) => {
+        if (!v) return 'معلق';
+        const x = String(v).trim();
+        if (AR2EN[x]) { state.statusStyle = 'ar'; return x; }
+        const low = x.toLowerCase();
+        if (EN2AR[low]) { state.statusStyle = 'en'; return EN2AR[low]; }
+        return 'معلق';
+      };
+      const remoteStatus = (ar, style) => (style === 'ar' ? ar : (AR2EN[ar] || 'pending'));
+      const styleFromSchema = (bp, statusCol) => {
+        if (state.statusStyle) return state.statusStyle;
+        const p = bp && statusCol && bp[statusCol];
+        const pool = p ? [].concat(p.enum || [], p.default ? [String(p.default).replace(/'/g, '').split('::')[0]] : []) : [];
+        if (pool.some(v => AR2EN[v])) return 'ar';
+        return 'en';
+      };
+
+      function normalize(row, m) {
+        const one = (v) => (Array.isArray(v) ? v[0] : v) || {};
+        const c = one(row.clients), s = one(row.services);
+        let date = '', time = '';
+        if (m.b.date && row[m.b.date]) date = String(row[m.b.date]).slice(0, 10);
+        if (m.b.time && row[m.b.time]) time = String(row[m.b.time]).slice(0, 5);
+        if (!time && m.b.ts && /^\d{2}:\d{2}/.test(String(row[m.b.ts] || ''))) time = String(row[m.b.ts]).slice(0, 5);
+        if ((!date || !time) && m.b.ts && row[m.b.ts] && !/^\d{2}:\d{2}/.test(String(row[m.b.ts]))) {
+          const d = new Date(row[m.b.ts]);
+          if (!isNaN(d)) { date = date || `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; time = time || `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+        }
+        const svcPrice = s.price != null ? Number(s.price) : 0;
+        return {
+          id: 'r-' + row.id,
+          remoteId: row.id,
+          synced: true,
+          customerName: c.name || c.full_name || c.customer_name || row.customer_name || row.client_name || row.name || '—',
+          phone: String(c.phone || c.mobile || c.phone_number || row.customer_phone || row.client_phone || row.phone || ''),
+          serviceId: row.service_id || s.id || '',
+          serviceName: s.name || s.title || row.service_name || '—',
+          price: Number(m.b.price && row[m.b.price] != null ? row[m.b.price] : svcPrice) || 0,
+          date, time,
+          status: normStatus(row[m.b.status]),
+          notes: (m.b.notes && row[m.b.notes]) || '',
+          _sort: String(row.created_at || '') || String(row.id).padStart(12, '0')
+        };
+      }
+
+      async function fetchAll() {
+        if (!sb) return { ok: false, error: 'مكتبة Supabase لم يتم تحميلها (تأكد من الإنترنت)' };
+        try {
+          const schema = await loadSchema();
+          const m = maps(schema);
+          let { data, error } = await sb.from('bookings').select('*, clients(*), services(*)');
+          if (error) { ({ data, error } = await sb.from('bookings').select('*')); }
+          if (error) return { ok: false, error: errMsg(error) };
+          const list = (data || []).map(r => normalize(r, m)).sort((a, b) => (a._sort < b._sort ? 1 : -1));
+          return { ok: true, list };
+        } catch (e) { return { ok: false, error: errMsg(e) }; }
+      }
+
+      async function createBooking(bk, services, opts = {}) {
+        if (!sb) return { ok: false, error: 'مكتبة Supabase لم يتم تحميلها (تأكد من الإنترنت)' };
+        try {
+          const schema = await loadSchema();
+          if (schema.errors.bookings && !schema.tables.bookings) {
+            return { ok: false, error: 'لا يمكن الوصول لجدول bookings: ' + schema.errors.bookings };
+          }
+          const m = maps(schema);
+
+          // 1) prevent double booking across devices
+          if (!opts.skipConflict) {
+            const cur = await fetchAll();
+            if (cur.ok && cur.list.some(r => r.date === bk.date && r.time === bk.time && r.status !== 'ملغي')) {
+              return { ok: false, conflict: true, error: 'هذا الموعد تم حجزه للتو، من فضلك اختر موعداً آخر.' };
+            }
+          }
+
+          const payload = {};
+
+          // 2) client row (find by phone or create)
+          if (m.b.clientId) {
+            let clientId = null;
+            const f = await sb.from('clients').select('*').eq(m.c.phone, bk.phone).limit(1);
+            if (!f.error && f.data && f.data[0]) clientId = f.data[0].id;
+            if (clientId == null) {
+              const ins = await sb.from('clients').insert({ [m.c.name]: bk.customerName, [m.c.phone]: bk.phone }).select().single();
+              if (ins.error) {
+                const again = await sb.from('clients').select('*').eq(m.c.phone, bk.phone).limit(1);
+                if (again.data && again.data[0]) clientId = again.data[0].id;
+                else return { ok: false, error: 'تعذر حفظ بيانات العميل: ' + errMsg(ins.error) };
+              } else clientId = ins.data.id;
+            }
+            payload[m.b.clientId] = clientId;
+          }
+
+          // 3) service id (match by name in services table)
+          if (m.b.serviceId) {
+            const sv = await sb.from('services').select('*');
+            if (!sv.error && sv.data) {
+              const norm = (x) => String(x || '').trim();
+              const hit = sv.data.find(r => norm(r[m.s.name]) === norm(bk.serviceName));
+              if (hit) payload[m.b.serviceId] = hit.id;
+              else if (m.bp && !('service_id' in m.bp)) { /* column not present */ }
+            }
+          }
+
+          // 4) the rest of the columns (only the ones that exist)
+          if (m.b.date && m.b.time) { payload[m.b.date] = bk.date; payload[m.b.time] = bk.time; }
+          else if (m.b.date && !m.b.ts) { payload[m.b.date] = bk.date; }
+          else if (m.b.date && m.b.ts) {
+            payload[m.b.date] = bk.date;
+            const f = String((m.bp && m.bp[m.b.ts] && m.bp[m.b.ts].format) || '');
+            payload[m.b.ts] = /timestamp/.test(f) ? new Date(`${bk.date}T${bk.time}:00`).toISOString() : bk.time;
+          }
+          else if (m.b.ts) { payload[m.b.ts] = new Date(`${bk.date}T${bk.time}:00`).toISOString(); }
+          if (m.b.notes) payload[m.b.notes] = bk.notes || '';
+          if (m.b.price) payload[m.b.price] = bk.price;
+          if (m.b.name) payload[m.b.name] = bk.customerName;
+          if (m.b.phone) payload[m.b.phone] = bk.phone;
+          if (m.b.serviceName) payload[m.b.serviceName] = bk.serviceName;
+
+          const style = styleFromSchema(m.bp, m.b.status);
+          const tryInsert = async (st) => {
+            const body = { ...payload };
+            if (m.b.status) body[m.b.status] = remoteStatus(bk.status || 'معلق', st);
+            return sb.from('bookings').insert(body);
+          };
+          let res = await tryInsert(style);
+          if (res.error && m.b.status) {
+            const other = style === 'ar' ? 'en' : 'ar';
+            const retry = await tryInsert(other);
+            if (!retry.error) { state.statusStyle = other; res = retry; }
+          }
+          if (res.error) return { ok: false, error: errMsg(res.error) };
+          return { ok: true };
+        } catch (e) { return { ok: false, error: errMsg(e) }; }
+      }
+
+      async function updateStatus(remoteId, arStatus) {
+        try {
+          const schema = await loadSchema(); const m = maps(schema);
+          if (!m.b.status) return { ok: false, error: 'لا يوجد عمود حالة' };
+          const { data, error } = await sb.from('bookings').update({ [m.b.status]: remoteStatus(arStatus, styleFromSchema(m.bp, m.b.status)) }).eq('id', remoteId).select();
+          if (error) return { ok: false, error: errMsg(error) };
+          if (!data || !data.length) return { ok: false, error: 'لم يتم تعديل أي صف (راجع صلاحيات RLS)' };
+          return { ok: true };
+        } catch (e) { return { ok: false, error: errMsg(e) }; }
+      }
+
+      async function remove(remoteId) {
+        try {
+          const { data, error } = await sb.from('bookings').delete().eq('id', remoteId).select();
+          if (error) return { ok: false, error: errMsg(error) };
+          if (!data || !data.length) return { ok: false, error: 'لم يتم حذف أي صف (راجع صلاحيات RLS)' };
+          return { ok: true };
+        } catch (e) { return { ok: false, error: errMsg(e) }; }
+      }
+
+      return { fetchAll, createBooking, updateStatus, remove };
+    })();
+
+    
+// --- Error boundary: never show a blank/black page ---
+    class ErrorBoundary extends React.Component {
+      constructor(props) { super(props); this.state = { error: null }; }
+      static getDerivedStateFromError(error) { return { error }; }
+      componentDidCatch(error, info) { console.error('App error:', error, info); }
+      render() {
+        if (this.state.error) {
+          return (
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, textAlign: 'center', color: '#f3f4f6' }}>
+              <h2 style={{ color: '#d4af37', fontSize: 22, fontWeight: 800 }}>حصلت مشكلة أثناء عرض الصفحة</h2>
+              <p style={{ fontSize: 14, opacity: 0.8 }}>{String(this.state.error && this.state.error.message || this.state.error)}</p>
+              <button onClick={() => location.reload()} style={{ background: '#d4af37', color: '#0c0d0e', padding: '10px 24px', borderRadius: 12, fontWeight: 700 }}>
+                إعادة تحميل
+              </button>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
 
     // --- INITIAL SEED DATA FOR LOCALSTORAGE ---
     const INITIAL_SERVICES = [
@@ -222,7 +431,13 @@ useEffect(() => {
     const getStoredData = (key, fallback) => {
       try {
         const item = localStorage.getItem(`sharoud_${key}`);
-        return item ? JSON.parse(item) : fallback;
+        if (!item) return fallback;
+        const parsed = JSON.parse(item);
+        if (Array.isArray(fallback)) return Array.isArray(parsed) ? parsed : fallback;
+        if (fallback && typeof fallback === 'object') {
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? { ...fallback, ...parsed } : fallback;
+        }
+        return parsed;
       } catch (e) {
         return fallback;
       }
@@ -259,6 +474,40 @@ useEffect(() => {
       // Notification toast state
       const [toast, setToast] = useState(null);
 
+      // Supabase: two-way sync for bookings (errors never break the UI)
+      const [dbStatus, setDbStatus] = useState(null);
+      const bookingsRef = React.useRef(bookings);
+      const servicesRef = React.useRef(services);
+      bookingsRef.current = bookings;
+      servicesRef.current = services;
+
+      useEffect(() => {
+        let cancelled = false;
+        const run = async () => {
+          // retry bookings that could not be saved online earlier
+          const pending = bookingsRef.current.filter(x => x.pendingSync && !x.remoteId);
+          for (const p of pending) {
+            const r = await DB.createBooking(p, servicesRef.current, { skipConflict: true });
+            if (r.ok && !cancelled) setBookings(cur => cur.map(x => x.id === p.id ? { ...x, pendingSync: false, synced: true } : x));
+          }
+          const res = await DB.fetchAll();
+          if (cancelled) return;
+          if (!res.ok) { console.warn('Supabase bookings:', res.error); setDbStatus({ ok: false, msg: res.error }); return; }
+          setDbStatus({ ok: true });
+          setBookings(cur => {
+            const keyOf = (b) => [b.phone, b.date, b.time].join('|');
+            const remoteKeys = new Set(res.list.map(keyOf));
+            const localOnly = cur.filter(b => !b.remoteId && !remoteKeys.has(keyOf(b)));
+            return [...res.list.map(({ _sort, ...rest }) => rest), ...localOnly];
+          });
+        };
+        run();
+        const timer = setInterval(run, 30000);
+        const onVis = () => { if (document.visibilityState === 'visible') run(); };
+        document.addEventListener('visibilitychange', onVis);
+        return () => { cancelled = true; clearInterval(timer); document.removeEventListener('visibilitychange', onVis); };
+      }, []);
+
       useEffect(() => { setStoredData('services', services); }, [services]);
       useEffect(() => { setStoredData('gallery', gallery); }, [gallery]);
       useEffect(() => { setStoredData('reviews', reviews); }, [reviews]);
@@ -269,6 +518,34 @@ useEffect(() => {
       const showToast = (message, type = 'success') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 4000);
+      };
+
+      // Admin changes -> push to Supabase (add / status change / delete)
+      const setBookingsSynced = (next) => {
+        const prev = bookingsRef.current;
+        setBookings(next);
+        if (!sb) return;
+        const prevMap = new Map(prev.map(b => [b.id, b]));
+        const nextIds = new Set(next.map(b => b.id));
+        (async () => {
+          for (const b of next) {
+            const p = prevMap.get(b.id);
+            if (!p) {
+              const r = await DB.createBooking(b, servicesRef.current, { skipConflict: true });
+              if (r.ok) setBookings(cur => cur.map(x => x.id === b.id ? { ...x, synced: true } : x));
+              else { setBookings(cur => cur.map(x => x.id === b.id ? { ...x, pendingSync: true } : x)); showToast('الحجز اتحفظ على الجهاز فقط: ' + r.error, 'error'); }
+            } else if (p.status !== b.status && b.remoteId) {
+              const r = await DB.updateStatus(b.remoteId, b.status);
+              if (!r.ok) showToast('تعذر تحديث الحالة أونلاين: ' + r.error, 'error');
+            }
+          }
+          for (const p of prev) {
+            if (!nextIds.has(p.id) && p.remoteId) {
+              const r = await DB.remove(p.remoteId);
+              if (!r.ok) showToast('تعذر الحذف أونلاين: ' + r.error, 'error');
+            }
+          }
+        })();
       };
 
       const handleDirectBooking = (service) => {
@@ -412,6 +689,11 @@ useEffect(() => {
 
           {/* MAIN CONTENT AREA CONTAINER */}
           <main className="flex-grow">
+            {currentTab === 'admin' && isAdminLoggedIn && dbStatus && (
+              <div className={`max-w-7xl mx-auto mt-4 mx-4 px-4 py-2 rounded-xl text-xs font-bold ${dbStatus.ok ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'}`}>
+                {dbStatus.ok ? '● متصل بقاعدة البيانات (Supabase)' : '● غير متصل بقاعدة البيانات: ' + dbStatus.msg}
+              </div>
+            )}
             {currentTab === 'home' && (
               <HomeView 
                 settings={settings} 
@@ -441,15 +723,18 @@ useEffect(() => {
                 services={services} 
                 bookings={bookings} 
                 selectedService={selectedServiceForBooking}
-                onBookingCreated={(newBk) => {
-                  setBookings([newBk, ...bookings]);
+                onBookingCreated={async (newBk) => {
+                  const remote = await DB.createBooking(newBk, services);
+                  if (remote.conflict) return remote;
+                  newBk = remote.ok ? { ...newBk, synced: true } : { ...newBk, pendingSync: true };
+                  setBookings(cur => [newBk, ...cur]);
                   
                   // Auto update or add customer
                   const existingCustIndex = customers.findIndex(c => c.phone === newBk.phone);
                   if (existingCustIndex >= 0) {
-                    const updatedCusts = [...customers];
-                    updatedCusts[existingCustIndex].visits += 1;
-                    updatedCusts[existingCustIndex].totalSpent += newBk.price;
+                    const updatedCusts = customers.map((c, i) => i === existingCustIndex
+                      ? { ...c, visits: (c.visits || 0) + 1, totalSpent: (c.totalSpent || 0) + newBk.price }
+                      : c);
                     setCustomers(updatedCusts);
                   } else {
                     setCustomers([...customers, {
@@ -462,7 +747,9 @@ useEffect(() => {
                     }]);
                   }
 
-                  showToast('تم حجز الموعد بنجاح! سنقوم بإنهاء الحجز معك.');
+                  if (remote.ok) showToast('تم حجز الموعد وحفظه أونلاين بنجاح!');
+                  else showToast('تم الحجز لكن لم يُحفظ أونلاين: ' + remote.error, 'error');
+                  return remote;
                 }}
                 settings={settings}
               />
@@ -490,7 +777,7 @@ useEffect(() => {
                   services={services} setServices={setServices}
                   gallery={gallery} setGallery={setGallery}
                   reviews={reviews} setReviews={setReviews}
-                  bookings={bookings} setBookings={setBookings}
+                  bookings={bookings} setBookings={setBookingsSynced}
                   customers={customers} setCustomers={setCustomers}
                   settings={settings} setSettings={setSettings}
                   showToast={showToast}
@@ -1009,13 +1296,15 @@ useEffect(() => {
         }));
       }, [selectedDate, bookings]);
 
-      const handleSubmitBooking = (e) => {
+      const [submitting, setSubmitting] = useState(false);
+      const handleSubmitBooking = async (e) => {
         e.preventDefault();
         if (!validateEgyptianPhone(phone)) {
           setPhoneError('يرجى إدخال رقم هاتف مصري صحيح مكون من 11 رقم ويبدأ بـ (010, 011, 012, 015)');
           return;
         }
         setPhoneError('');
+        if (!chosenService) { return; }
 
         const newBooking = {
           id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
@@ -1030,8 +1319,13 @@ useEffect(() => {
           notes
         };
 
-        onBookingCreated(newBooking);
-        setConfirmedBooking(newBooking);
+        if (submitting) return;
+        setSubmitting(true);
+        let result = null;
+        try { result = await onBookingCreated(newBooking); } catch (err) { result = { ok: false, error: String(err && err.message || err) }; }
+        setSubmitting(false);
+        if (result && result.conflict) { alert(result.error); setStep(2); return; }
+        setConfirmedBooking({ ...newBooking, synced: !!(result && result.ok), syncError: result && result.error });
         setStep(4); // Confirmation step
       };
 
@@ -1245,10 +1539,11 @@ useEffect(() => {
                 </button>
                 <button
                   type="submit"
-                  className="gold-button px-8 py-3 rounded-xl font-extrabold text-sm flex items-center gap-2 shadow-lg"
+                  disabled={submitting}
+                  className="gold-button px-8 py-3 rounded-xl font-extrabold text-sm flex items-center gap-2 shadow-lg disabled:opacity-60"
                 >
                   <i className="fa-solid fa-circle-check"></i>
-                  <span>تأكيد الحجز النهائي</span>
+                  <span>{submitting ? 'جاري الحفظ...' : 'تأكيد الحجز النهائي'}</span>
                 </button>
               </div>
             </form>
@@ -1264,6 +1559,9 @@ useEffect(() => {
               <div className="space-y-2">
                 <h3 className="text-2xl font-extrabold text-white">تم استلام طلب الحجز بنجاح!</h3>
                 <p className="text-xs text-gray-400">كود الحجز المرجعي: <span className="text-gold-400 font-mono font-bold">{confirmedBooking.id}</span></p>
+                {confirmedBooking.synced
+                  ? <p className="text-xs text-emerald-400 font-bold">✓ تم حفظ الحجز أونلاين</p>
+                  : <p className="text-xs text-amber-400 font-bold">⚠ تم حفظ الحجز على جهازك فقط، وسيُعاد المحاولة تلقائياً. أرسل التفاصيل عبر واتساب للتأكيد.</p>}
               </div>
 
               <div className="bg-dark-800 p-4 rounded-xl border border-gold-500/20 text-right space-y-2 text-xs max-w-md mx-auto">
@@ -1748,6 +2046,7 @@ useEffect(() => {
 
       const handleAddManualBooking = (e) => {
         e.preventDefault();
+        if (!mService) { showToast('أضف خدمة أولاً', 'error'); return; }
         const newBk = {
           id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
           customerName: mName,
@@ -2240,7 +2539,7 @@ useEffect(() => {
 
     // Render React Application
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    root.render(<ErrorBoundary><App /></ErrorBoundary>);
   </script>
 </body>
 </html>
