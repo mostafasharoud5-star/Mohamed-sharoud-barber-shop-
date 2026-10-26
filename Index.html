@@ -31,8 +31,7 @@
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
 
-  <!-- Supabase client (UMD, no import map needed) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  
 
   <!-- Custom Tailwind Config for Gold & Dark Charcoal Theme -->
  
@@ -146,24 +145,60 @@
       if (!Object.keys(h).some(k => k.toLowerCase() === 'apikey')) h.apikey = SUPABASE_ANON_KEY;
       opts.headers = h;
       delete opts.signal;
-      return fetch(url, opts);
+      return fetch(url, opts).then(res => { window.__lastFail = res.ok ? '' : (res.status + ' ' + url); return res; });
     };
+    // Minimal PostgREST client (direct fetch, no library): select / insert / update / delete
+    function makeRest(baseUrl, key) {
+      const base = baseUrl.replace(/\/+$/, '') + '/rest/v1/';
+      const isJwt = !/^sb_/.test(key);
+      const from = (table) => {
+        let method = 'GET', body = null, cols = '*', filters = [], lim = null, wantRows = false, single = false;
+        const run = async () => {
+          const params = [];
+          if (method === 'GET' || wantRows) params.push('select=' + encodeURIComponent(cols.replace(/\s+/g, '')));
+          filters.forEach(f => params.push(f));
+          if (lim != null) params.push('limit=' + lim);
+          const headers = { apikey: key, 'Content-Type': 'application/json', Accept: single ? 'application/vnd.pgrst.object+json' : 'application/json' };
+          if (isJwt) headers.Authorization = 'Bearer ' + key;
+          if (method !== 'GET') headers.Prefer = wantRows ? 'return=representation' : 'return=minimal';
+          const url = base + encodeURIComponent(table) + (params.length ? '?' + params.join('&') : '');
+          try {
+            const res = await plainFetch(url, { method, headers, body: body != null ? JSON.stringify(body) : undefined });
+            const text = await res.text();
+            let json = null;
+            try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+            if (!res.ok) return { data: null, error: (json && (json.message || json.hint)) ? json : { message: text || res.statusText || ('HTTP ' + res.status) } };
+            return { data: json, error: null };
+          } catch (e) {
+            return { data: null, error: { message: 'Network error: ' + (e && e.message || e) + ' [' + url + ']' } };
+          }
+        };
+        const b = {
+          select(c) { if (method === 'GET') cols = c || '*'; else { wantRows = true; if (c) cols = c; } return b; },
+          insert(p) { method = 'POST'; body = p; return b; },
+          update(p) { method = 'PATCH'; body = p; return b; },
+          delete() { method = 'DELETE'; return b; },
+          eq(k, v) { filters.push(encodeURIComponent(k) + '=eq.' + encodeURIComponent(v)); return b; },
+          limit(n) { lim = n; return b; },
+          single() { single = true; return b; },
+          then(resolve, reject) { return run().then(resolve, reject); }
+        };
+        return b;
+      };
+      return { from };
+    }
     let sb = null;
-    try {
-      if (window.supabase && window.supabase.createClient) {
-        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          global: { fetch: plainFetch },
-          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-        });
-      }
-    } catch (e) { console.warn('Supabase init failed:', e); }
+    try { sb = makeRest(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { console.warn('Supabase init failed:', e); }
 
     // --- DB layer: online bookings via Supabase (auto-detects column names) ---
     const DB = (() => {
       const AR2EN = { 'معلق': 'pending', 'مؤكد': 'confirmed', 'مكتمل': 'completed', 'ملغي': 'cancelled' };
       const EN2AR = { pending: 'معلق', confirmed: 'مؤكد', completed: 'مكتمل', cancelled: 'ملغي', canceled: 'ملغي' };
       const state = { statusStyle: null, schemaPromise: null, servicesCache: null };
-      const errMsg = (e) => (e && (e.message || e.details || e.hint)) ? [e.message, e.hint].filter(Boolean).join(' - ') : String(e);
+      const errMsg = (e) => {
+        const base = (e && (e.message || e.details || e.hint)) ? [e.message, e.hint].filter(Boolean).join(' - ') : String(e);
+        return window.__lastFail ? base + ' [' + window.__lastFail + ']' : base;
+      };
 
       const pick = (props, list, fallback) => {
         if (!props) return fallback || null;
