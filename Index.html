@@ -236,13 +236,13 @@
       function maps(schema) {
         const bp = schema.tables.bookings, cp = schema.tables.clients, sp = schema.tables.services;
         const b = {
-          clientId: pick(bp, ['client_id', 'customer_id'], 'client_id'),
-          serviceId: pick(bp, ['service_id'], 'service_id'),
+          clientId: 'client_id',
+          serviceId: 'service_id',
           date: pick(bp, ['date', 'appointment_date', 'day'], null),
           time: pick(bp, ['time', 'appointment_time'], null),
-          ts: pick(bp, ['booking_time', 'appointment_at', 'booking_at', 'start_at', 'starts_at', 'start_time', 'datetime', 'date_time', 'booked_at'], 'booking_time'),
-          status: pick(bp, ['status', 'state'], 'status'),
-          notes: pick(bp, ['notes', 'note', 'comments'], bp ? null : 'notes'),
+          ts: 'booking_time',
+          status: 'status',
+          notes: 'notes',
           price: pick(bp, ['price', 'total', 'amount', 'total_price'], null),
           name: pick(bp, ['customer_name', 'client_name'], null),
           phone: pick(bp, ['customer_phone', 'client_phone'], null),
@@ -290,8 +290,8 @@
         }
         const svcPrice = s.price != null ? Number(s.price) : 0;
         return {
-          id: 'r-' + row.id,
-          remoteId: row.id,
+          id: 'r-' + row.booking_id,
+          remoteId: row.booking_id,
           synced: true,
           customerName: c.name || c.full_name || c.customer_name || row.customer_name || row.client_name || row.name || '—',
           phone: String(c.phone || c.mobile || c.phone_number || row.customer_phone || row.client_phone || row.phone || ''),
@@ -299,9 +299,9 @@
           serviceName: s.name || s.title || row.service_name || '—',
           price: Number(m.b.price && row[m.b.price] != null ? row[m.b.price] : svcPrice) || 0,
           date, time,
-          status: normStatus(row[m.b.status]),
-          notes: (m.b.notes && row[m.b.notes]) || '',
-          _sort: String(row.created_at || '') || String(row.id).padStart(12, '0')
+          status: normStatus(row.status),
+          notes: row.notes || '',
+          _sort: String(row.created_at || '') || String(row.booking_id).padStart(12, '0')
         };
       }
 
@@ -350,7 +350,7 @@
                 else return { ok: false, error: 'تعذر حفظ بيانات العميل: ' + errMsg(ins.error) };
               } else clientId = ins.data.id;
             }
-            payload[m.b.clientId] = clientId;
+            payload.client_id = clientId;
           }
 
           // 3) ربط الخدمة بجدول الخدمات الفرعي
@@ -359,36 +359,32 @@
             if (!sv.error && sv.data) {
               const norm = (x) => String(x || '').trim();
               const hit = sv.data.find(r => norm(r[m.s.name]) === norm(bk.serviceName));
-              if (hit) payload[m.b.serviceId] = hit.id;
+              if (hit) payload.service_id = hit.id;
             }
           }
 
           // 4) توحيد صيغة الوقت والتاريخ كـ ISO Timestamp مع إرسال القيم المنفصلة
           const unifiedTimestamp = new Date(`${bk.date}T${bk.time}:00`).toISOString();
 
-          if (m.b.ts) {
-            payload[m.b.ts] = unifiedTimestamp;
-          } else {
-            payload['booking_time'] = unifiedTimestamp;
-          }
+          payload.booking_time = unifiedTimestamp;
 
           if (m.b.date) payload[m.b.date] = bk.date;
           if (m.b.time) payload[m.b.time] = bk.time;
 
-          if (m.b.notes) payload[m.b.notes] = bk.notes || '';
+          payload.notes = bk.notes || '';
           if (m.b.price) payload[m.b.price] = bk.price;
           if (m.b.name) payload[m.b.name] = bk.customerName;
           if (m.b.phone) payload[m.b.phone] = bk.phone;
           if (m.b.serviceName) payload[m.b.serviceName] = bk.serviceName;
 
-          const style = styleFromSchema(m.bp, m.b.status);
+          const style = styleFromSchema(m.bp, 'status');
           const tryInsert = async (st) => {
             const body = { ...payload };
-            if (m.b.status) body[m.b.status] = remoteStatus(bk.status || 'معلق', st);
+            body.status = remoteStatus(bk.status || 'معلق', st);
             return sb.from('bookings').insert(body);
           };
           let res = await tryInsert(style);
-          if (res.error && m.b.status) {
+          if (res.error) {
             const other = style === 'ar' ? 'en' : 'ar';
             const retry = await tryInsert(other);
             if (!retry.error) { state.statusStyle = other; res = retry; }
@@ -401,8 +397,7 @@
       async function updateStatus(remoteId, arStatus) {
         try {
           const schema = await loadSchema(); const m = maps(schema);
-          if (!m.b.status) return { ok: false, error: 'لا يوجد عمود حالة' };
-          const { data, error } = await sb.from('bookings').update({ [m.b.status]: remoteStatus(arStatus, styleFromSchema(m.bp, m.b.status)) }).eq('id', remoteId).select();
+          const { data, error } = await sb.from('bookings').update({ status: remoteStatus(arStatus, styleFromSchema(m.bp, 'status')) }).eq('booking_id', remoteId).select();
           if (error) return { ok: false, error: errMsg(error) };
           if (!data || !data.length) return { ok: false, error: 'لم يتم تعديل أي صف (راجع صلاحيات RLS)' };
           return { ok: true };
@@ -411,7 +406,7 @@
 
       async function remove(remoteId) {
         try {
-          const { data, error } = await sb.from('bookings').delete().eq('id', remoteId).select();
+          const { data, error } = await sb.from('bookings').delete().eq('booking_id', remoteId).select();
           if (error) return { ok: false, error: errMsg(error) };
           if (!data || !data.length) return { ok: false, error: 'لم يتم حذف أي صف (راجع صلاحيات RLS)' };
           return { ok: true };
