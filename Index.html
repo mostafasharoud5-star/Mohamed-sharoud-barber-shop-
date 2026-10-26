@@ -2,8 +2,6 @@
 <html lang="ar" dir="rtl" class="dark">
 <head>
   <meta name="google-site-verification" content="RqoCKwKT8u3r1k3w45Gj_4R_pL_2yP8jG7rRW_RKGUo" />
-  <meta name="google-site-verification" content="RqoCKwKT8u3r1k3w45Gj_4R_pL_2yP8jG7rRW_RKGUo" />
-  <meta name="google-site-verification" content="RqoCKwKT8u3r1k3w45Gj_4R_pL_2yP8jG7rRW_RKGUo" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>صالون الحلاق محمد شرود | الفخامة والاحترافية</title>
@@ -33,6 +31,27 @@
 
   <!-- Custom Tailwind Config for Gold & Dark Charcoal Theme -->
   <script>
+  import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://cusqowujugaccgzxzebg.supabase.co/rest/v1/'
+const supabaseAnonKey = 'sb_publishable_x9qrmULDUHciSDkAVMIDdQ_hKHJBW7C'
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+async function fetchBookings() {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, clients(*), services(*)')
+    
+  if (error) {
+    console.error('Error fetching bookings:', error)
+  } else {
+    console.log('Bookings:', data)
+  }
+}
+
+fetchBookings()
+
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -133,6 +152,24 @@
   <!-- React Logic Script -->
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
+  // Add this below line 154
+const [bookings, setBookings] = useState([]);
+async function fetchBookings() {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, clients(*), services(*)');
+
+  if (error) {
+    console.error('Error fetching bookings:', error);
+  } else {
+    setBookings(data);
+  }
+}
+
+useEffect(() => {
+  fetchBookings();
+}, []);
+
 
     // --- INITIAL SEED DATA FOR LOCALSTORAGE ---
     const INITIAL_SERVICES = [
