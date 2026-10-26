@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>صالون الحلاق محمد شرود | الفخامة والاحترافية</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="صالون الحلاق محمد شرود - أرقى خدمات الحلاقة الرجالية، العناية بالبشرة، وتصفيف الشعر. احجز موعدك أونلاين الآن.">
+  <meta name="keywords" content="حلاق, صالون حلاقة, محمد شرود, حلاقة رجالي, تنظيف بشرة, حلاقة ذقن, العناية بالرجل">
+  <meta property="og:title" content="صالون الحلاق محمد شرود | الفخامة والاحترافية">
+  <meta property="og:description" content="تجربة حلاقة فاخرة وعناية متكاملة للرجل العصري. احجز موعدك بكل سهولة.">
+  <meta property="og:type" content="website">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Cairo & Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- React & Babel Framework scripts for SPA -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Custom Tailwind Config for Gold & Dark Charcoal Theme -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              300: '#f3e5ab',
+              400: '#e6ca65',
+              500: '#d4af37',
+              600: '#aa8c2c',
+              700: '#806921',
+            },
+            dark: {
+              900: '#0c0d0e',
+              800: '#141619',
+              700: '#1e2227',
+              600: '#2a2f37',
+            }
+          },
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+            tajawal: ['Tajawal', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #0c0d0e;
+      color: #f3f4f6;
+      overflow-x: hidden;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #141619;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #d4af37;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #aa8c2c;
+    }
+
+    /* Glassmorphism Styles */
+    .glass-card {
+      background: rgba(20, 22, 25, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+    }
+
+    .glass-card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card-hover:hover {
+      transform: translateY(-5px);
+      border-color: rgba(212, 175, 55, 0.4);
+      box-shadow: 0 10px 30px -10px rgba(212, 175, 55, 0.2);
+    }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #FFF 0%, #d4af37 50%, #e6ca65 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gold-button {
+      background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 100%);
+      color: #0c0d0e;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+    .gold-button:hover {
+      background: linear-gradient(135deg, #e6ca65 0%, #d4af37 100%);
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    }
+
+    /* Animations */
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    .pulse-glow {
+      animation: pulseGlow 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-dark-900 text-gray-100 antialiased selection:bg-gold-500 selection:text-dark-900">
+  <div id="root"></div>
+
+  <!-- React Logic Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- INITIAL SEED DATA FOR LOCALSTORAGE ---
+    const INITIAL_SERVICES = [
+      { id: 'srv-1', name: 'قص شعر وتصفيف VIP', category: 'شعر', price: 150, duration: 30, image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80', description: 'قص الشعر وتصفيفه بحدث الصيحات العالمية مع غسيل وسشوار', active: true },
+      { id: 'srv-2', name: 'تحديد وتنظيف ذقن بالموس', category: 'ذقن', price: 50, duration: 25, image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=600&q=80', description: 'تحديد الذقن باحترافية، حمام بخار سريعة وزيوت مغذية', active: true },
+      { id: 'srv-3', name: 'الباكج الملكي (شعر + ذقن + ماسك)', category: 'باقات شاملة', price: 350, duration: 60, image: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=600&q=80', description: 'قص شعر + تحديد ذقن + جلسة تنظيف بشرة عميقة واستشوار', active: true },
+      { id: 'srv-4', name: 'تنظيف بشرة', category: 'العناية بالبشرة', price: 100, duration: 45, image: 'https://images.unsplash.com/photo-1512290900676-26c2a48f4134?auto=format&fit=crop&w=600&q=80', description: 'إزالة الرؤوس السوداء، بخار، تقشير بمواد طبيعية، وماسك النضارة', active: true },
+      { id: 'srv-5', name: 'صبغة وتغطية الشيب', category: 'شعر', price: 150, duration: 40, image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=600&q=80', description: 'صبغة إيطالية خالية من الأمونيا لحماية فروة الرأس', active: true },
+      { id: 'srv-6', name: 'قص شعر أطفال', category: 'شعر', price: 70-100, duration: 25, image: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&w=600&q=80', description: 'تعامل خاص وهادئ مع الأطفال لقص أحدث الموديلات', active: true }
+    ];
+
+    const INITIAL_GALLERY = [
+      { id: 'gal-1', title: 'قصة فيد حديثة', category: 'قصات شعر', image: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?auto=format&fit=crop&w=600&q=80' },
+      { id: 'gal-2', title: 'تحديد ذقن ملكي', category: 'تحديد ذقن', image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=600&q=80' },
+      { id: 'gal-3', title: 'تحول كامل (قبل وبعد)', category: 'قبل وبعد', image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80' },
+      { id: 'gal-4', title: 'تصفيف شعر كلاسيكي', category: 'قصات شعر', image: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=600&q=80' },
+      { id: 'gal-5', title: 'جلسة عناية وتنظيف بشرة', category: 'قبل وبعد', image: 'https://images.unsplash.com/photo-1512290900676-26c2a48f4134?auto=format&fit=crop&w=600&q=80' }
+    ];
+
+    const INITIAL_REVIEWS = [
+      { id: 'rev-1', name: 'أحمد محمود', rating: 5, comment: 'أفضل حلاق في المنطقة بجد! الشغل نظيف جداً والمعاملة ممتازة والالتزام بالمواعيد 10/10.', status: 'approved', date: '2026-10-15' },
+      { id: 'rev-2', name: 'مهندس حسام الدين', rating: 5, comment: 'محمد شرود فنان بجد، قص الشعر بالظبط زي ما طلبته، وتنظيف البشرة عنده تحفة.', status: 'approved', date: '2026-10-18' },
+      { id: 'rev-3', name: 'كابتن محمود رزق', rating: 5, comment: 'الصالون نظيف جدا والأدوات معقمة بانتظام. الحجز أونلاين وفر عليا وقت كتير.', status: 'approved', date: '2026-10-20' }
+    ];
+
+    const INITIAL_BOOKINGS = [
+      { id: 'BK-1001', customerName: 'أحمد فهمي', phone: '01012345678', serviceId: 'srv-1', serviceName: 'قص شعر وتصفيف VIP', price: 150, date: '2026-10-21', time: '16:00', status: 'مؤكد', notes: 'يرجى التركيز على التحديد' },
+      { id: 'BK-1002', customerName: 'عمر الشريف', phone: '01123456789', serviceId: 'srv-3', serviceName: 'باكج الشروود الملكي', price: 350, date: '2026-10-21', time: '18:00', status: 'معلق', notes: 'مناسبة خاصة' },
+      { id: 'BK-1003', customerName: 'مصطفى كامل', phone: '01234567890', serviceId: 'srv-2', serviceName: 'تحديد وتنظيف ذقن بالموس', price: 100, date: '2026-10-20', time: '15:00', status: 'مكتمل', notes: '' },
+      { id: 'BK-1004', customerName: 'يوسف العبد', phone: '01512345678', serviceId: 'srv-4', serviceName: 'تنظيف بشرة هيدرافيسيال', price: 250, date: '2026-10-22', time: '19:30', status: 'مؤكد', notes: '' }
+    ];
+
+    const INITIAL_CUSTOMERS = [
+      { id: 'c-1', name: 'أحمد فهمي', phone: '01012345678', visits: 5, totalSpent: 750, notes: 'يفضل الشاي خفيف، والقص كلاسيك' },
+      { id: 'c-2', name: 'عمر الشريف', phone: '01123456789', visits: 2, totalSpent: 500, notes: 'عميل جديد - يفضل المواعيد المسائية' },
+      { id: 'c-3', name: 'مصطفى كامل', phone: '01234567890', visits: 8, totalSpent: 1200, notes: 'زبون دائم من 3 سنوات' }
+    ];
+
+    const INITIAL_SETTINGS = {
+      phone: '01014525858',
+      whatsapp: '201014525858',
+      address: 'ميت الخولي عبدالله بجوار الوحده الصحيه',
+      heroTitle: 'الحلاق محمد شرود',
+      heroSubtitle: 'أناقة الفخامة ولمسة الاحترافية للرجل العصري',
+      workHours: 'يومياً من 12:00 ظهراً حتى 12:00 منتصف الليل (الجمعة من 2 ظهراً)',
+      adminPass: 'hamza123'
+    };
+
+    // Helper functions for LocalStorage
+    const getStoredData = (key, fallback) => {
+      try {
+        const item = localStorage.getItem(`sharoud_${key}`);
+        return item ? JSON.parse(item) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
+    const setStoredData = (key, value) => {
+      try {
+        localStorage.setItem(`sharoud_${key}`, JSON.stringify(value));
+      } catch (e) {
+        console.error('LocalStorage Save Error:', e);
+      }
+    };
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      // Navigation states
+      const [currentTab, setCurrentTab] = useState('home'); // home, services, gallery, booking, contact, admin, admin-login
+      const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+      // Data Persistence States
+      const [services, setServices] = useState(() => getStoredData('services', INITIAL_SERVICES));
+      const [gallery, setGallery] = useState(() => getStoredData('gallery', INITIAL_GALLERY));
+      const [reviews, setReviews] = useState(() => getStoredData('reviews', INITIAL_REVIEWS));
+      const [bookings, setBookings] = useState(() => getStoredData('bookings', INITIAL_BOOKINGS));
+      const [customers, setCustomers] = useState(() => getStoredData('customers', INITIAL_CUSTOMERS));
+      const [settings, setSettings] = useState(() => getStoredData('settings', INITIAL_SETTINGS));
+
+      // Booking pre-selection handler
+      const [selectedServiceForBooking, setSelectedServiceForBooking] = useState(null);
+
+      // Lightbox modal image
+      const [lightboxImg, setLightboxImg] = useState(null);
+
+      // Notification toast state
+      const [toast, setToast] = useState(null);
+
+      useEffect(() => { setStoredData('services', services); }, [services]);
+      useEffect(() => { setStoredData('gallery', gallery); }, [gallery]);
+      useEffect(() => { setStoredData('reviews', reviews); }, [reviews]);
+      useEffect(() => { setStoredData('bookings', bookings); }, [bookings]);
+      useEffect(() => { setStoredData('customers', customers); }, [customers]);
+      useEffect(() => { setStoredData('settings', settings); }, [settings]);
+
+      const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+      };
+
+      const handleDirectBooking = (service) => {
+        setSelectedServiceForBooking(service);
+        setCurrentTab('booking');
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col justify-between relative bg-dark-900 text-gray-100">
+          
+          {/* Header Navigation */}
+          <header className="sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-gold-500/20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+              
+              {/* Logo & Brand Name */}
+              <div className="flex items-center space-x-3 space-x-reverse cursor-pointer" onClick={() => setCurrentTab('home')}>
+                <div className="w-12 h-12 rounded-full border-2 border-gold-500 flex items-center justify-center bg-dark-800 shadow-md">
+                  <i className="fa-solid fa-scissors text-gold-500 text-xl"></i>
+                </div>
+                <div>
+                  <h1 className="font-extrabold text-xl sm:text-2xl tracking-wide gold-gradient-text font-tajawal">محمد شرود</h1>
+                  <p className="text-xs text-gold-400/80 -mt-1 font-semibold">صالون الحلاقة والعناية</p>
+                </div>
+              </div>
+
+              {/* Desktop Nav Items */}
+              <nav className="hidden md:flex items-center space-x-1 lg:space-x-6 space-x-reverse text-sm font-semibold">
+                {[
+                  { id: 'home', label: 'الرئيسية', icon: 'fa-house' },
+                  { id: 'services', label: 'الخدمات والأسعار', icon: 'fa-list-check' },
+                  { id: 'gallery', label: 'معرض الأعمال', icon: 'fa-images' },
+                  { id: 'booking', label: 'حجز موعد', icon: 'fa-calendar-check' },
+                  { id: 'contact', label: 'اتصل بنا', icon: 'fa-phone' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentTab(item.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                      currentTab === item.id 
+                        ? 'text-gold-500 bg-dark-800 border border-gold-500/30' 
+                        : 'text-gray-300 hover:text-gold-400 hover:bg-dark-800/50'
+                    }`}
+                  >
+                    <i className={`fa-solid ${item.icon} text-xs`}></i>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+
+              {/* Header Right Action CTA & Admin Portal Trigger */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentTab('booking')}
+                  className="hidden sm:inline-flex items-center gap-2 gold-button px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-gold-500/10 active:scale-95 transform transition"
+                >
+                  <i className="fa-solid fa-calendar-plus"></i>
+                  <span>احجز الآن</span>
+                </button>
+
+                {isAdminLoggedIn ? (
+                  <button
+                    onClick={() => setCurrentTab('admin')}
+                    className="flex items-center gap-2 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-600/30 transition"
+                  >
+                    <i className="fa-solid fa-user-shield"></i>
+                    <span className="hidden sm:inline">لوحة التحكم</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setCurrentTab('admin-login')}
+                    className="p-2 text-gray-400 hover:text-gold-500 rounded-lg text-xs transition"
+                    title="دخول الأدمن"
+                  >
+                    <i className="fa-solid fa-lock text-base"></i>
+                  </button>
+                )}
+              </div>
+
+            </div>
+
+            {/* Mobile Nav Sticky Bar */}
+            <div className="md:hidden border-t border-dark-700 bg-dark-800/95 px-2 py-2 flex justify-around items-center text-xs">
+              {[
+                { id: 'home', label: 'الرئيسية', icon: 'fa-house' },
+                { id: 'services', label: 'الخدمات', icon: 'fa-cut' },
+                { id: 'booking', label: 'حجز', icon: 'fa-calendar-check' },
+                { id: 'gallery', label: 'المعرض', icon: 'fa-images' },
+                { id: 'contact', label: 'اتصل بنا', icon: 'fa-phone' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setCurrentTab(item.id)}
+                  className={`flex flex-col items-center py-1 px-2 rounded-md ${
+                    currentTab === item.id ? 'text-gold-500 font-bold' : 'text-gray-400'
+                  }`}
+                >
+                  <i className={`fa-solid ${item.icon} text-base mb-1`}></i>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </header>
+
+          {/* Toast Notification Banner */}
+          {toast && (
+            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+              <div className={`px-6 py-3 rounded-xl shadow-2xl border flex items-center gap-3 text-sm font-bold ${
+                toast.type === 'error' ? 'bg-rose-900 border-rose-500 text-rose-100' : 'bg-dark-800 border-gold-500 text-gold-300'
+              }`}>
+                <i className={`fa-solid ${toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check text-gold-500'}`}></i>
+                <span>{toast.message}</span>
+              </div>
+            </div>
+          )}
+
+          {/* FLOATING DIRECT CONTACT BUTTONS */}
+          <div className="fixed bottom-6 left-6 z-40 flex flex-col gap-3">
+            <a
+              href={`https://wa.me/${settings.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-13 h-13 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform text-2xl group relative"
+              title="تواصل عبر واتساب"
+            >
+              <i className="fa-brands fa-whatsapp"></i>
+              <span className="absolute left-16 bg-dark-800 text-white text-xs py-1 px-3 rounded shadow-lg border border-gold-500/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                واتساب مباشر
+              </span>
+            </a>
+            <a
+              href={`tel:01014525858${settings.phone}`}
+              className="w-13 h-13 bg-gold-500 text-dark-900 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform text-xl font-bold group relative"
+              title="اتصال تلفوني مباشر"
+            >
+              <i className="fa-solid fa-phone-volume"></i>
+              <span className="absolute left-16 bg-dark-800 text-white text-xs py-1 px-3 rounded shadow-lg border border-gold-500/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                اتصل بنا {settings.phone}
+              </span>
+            </a>
+          </div>
+
+          {/* MAIN CONTENT AREA CONTAINER */}
+          <main className="flex-grow">
+            {currentTab === 'home' && (
+              <HomeView 
+                settings={settings} 
+                services={services} 
+                reviews={reviews} 
+                onNavigate={setCurrentTab} 
+                onSelectBooking={handleDirectBooking} 
+              />
+            )}
+
+            {currentTab === 'services' && (
+              <ServicesView 
+                services={services} 
+                onSelectBooking={handleDirectBooking} 
+              />
+            )}
+
+            {currentTab === 'gallery' && (
+              <GalleryView 
+                gallery={gallery} 
+                onOpenLightbox={(img) => setLightboxImg(img)} 
+              />
+            )}
+
+            {currentTab === 'booking' && (
+              <BookingView 
+                services={services} 
+                bookings={bookings} 
+                selectedService={selectedServiceForBooking}
+                onBookingCreated={(newBk) => {
+                  setBookings([newBk, ...bookings]);
+                  
+                  // Auto update or add customer
+                  const existingCustIndex = customers.findIndex(c => c.phone === newBk.phone);
+                  if (existingCustIndex >= 0) {
+                    const updatedCusts = [...customers];
+                    updatedCusts[existingCustIndex].visits += 1;
+                    updatedCusts[existingCustIndex].totalSpent += newBk.price;
+                    setCustomers(updatedCusts);
+                  } else {
+                    setCustomers([...customers, {
+                      id: 'c-' + Date.now(),
+                      name: newBk.customerName,
+                      phone: newBk.phone,
+                      visits: 1,
+                      totalSpent: newBk.price,
+                      notes: 'حجز جديد عن طريق الموقع'
+                    }]);
+                  }
+
+                  showToast('تم حجز الموعد بنجاح! سنقوم بإنهاء الحجز معك.');
+                }}
+                settings={settings}
+              />
+            )}
+
+            {currentTab === 'contact' && (
+              <ContactView settings={settings} showToast={showToast} />
+            )}
+
+            {currentTab === 'admin-login' && (
+              <AdminLoginView 
+                settings={settings} 
+                onLoginSuccess={() => {
+                  setIsAdminLoggedIn(true);
+                  setCurrentTab('admin');
+                  showToast('تم تسجيل الدخول بنجاح بصلاحيات أدمن');
+                }}
+                showToast={showToast}
+              />
+            )}
+
+            {currentTab === 'admin' && (
+              isAdminLoggedIn ? (
+                <AdminDashboard 
+                  services={services} setServices={setServices}
+                  gallery={gallery} setGallery={setGallery}
+                  reviews={reviews} setReviews={setReviews}
+                  bookings={bookings} setBookings={setBookings}
+                  customers={customers} setCustomers={setCustomers}
+                  settings={settings} setSettings={setSettings}
+                  showToast={showToast}
+                  onLogout={() => {
+                    setIsAdminLoggedIn(false);
+                    setCurrentTab('home');
+                    showToast('تم تسجيل الخروج');
+                  }}
+                />
+              ) : (
+                <AdminLoginView 
+                  settings={settings} 
+                  onLoginSuccess={() => {
+                    setIsAdminLoggedIn(true);
+                    setCurrentTab('admin');
+                  }}
+                  showToast={showToast}
+                />
+              )
+            )}
+          </main>
+
+          {/* LIGHTBOX MODAL */}
+          {lightboxImg && (
+            <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-md" onClick={() => setLightboxImg(null)}>
+              <div className="relative max-w-4xl w-full bg-dark-800 border border-gold-500/30 rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  onClick={() => setLightboxImg(null)}
+                  className="absolute top-4 left-4 z-10 w-10 h-10 bg-dark-900/80 text-white rounded-full flex items-center justify-center border border-gold-500/30 hover:bg-gold-500 hover:text-dark-900 transition"
+                >
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <img src={lightboxImg.image} alt={lightboxImg.title} className="w-full max-h-[75vh] object-contain bg-black" />
+                <div className="p-4 bg-dark-800 text-center border-t border-gold-500/20">
+                  <h3 className="font-bold text-lg text-gold-400">{lightboxImg.title}</h3>
+                  <p className="text-xs text-gray-400">{lightboxImg.category}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FOOTER */}
+          <footer className="bg-dark-800 border-t border-gold-500/20 pt-12 pb-8 mt-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-dark-700">
+                <div>
+                  <div className="flex items-center space-x-3 space-x-reverse mb-4">
+                    <div className="w-10 h-10 rounded-full border border-gold-500 flex items-center justify-center bg-dark-900">
+                      <i className="fa-solid fa-scissors text-gold-500"></i>
+                    </div>
+                    <span className="font-bold text-xl gold-gradient-text">الحلاق محمد شرود</span>
+                  </div>
+                  <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                    تجربة حلاقة فاخرة تضمن لك الإطلالة المثالية والأناقة الكاملة بأحدث الترتيبات وأعلى درجات التعقيم.
+                  </p>
+                  <div className="flex space-x-3 space-x-reverse text-gold-500">
+                    <a href="https://www.facebook.com/share/1MfnnMFMnu/" className="w-9 h-9 rounded-lg bg-dark-900 border border-gold-500/20 flex items-center justify-center hover:bg-gold-500 hover:text-dark-900 transition"><i className="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/mohamed_sharoud74?vrfl=cTB0MnlwcDhvdHF3" className="w-9 h-9 rounded-lg bg-dark-900 border border-gold-500/20 flex items-center justify-center hover:bg-gold-500 hover:text-dark-900 transition"><i className="fa-brands fa-instagram"></i></a>
+                    <a href="https://vm.tiktok.com/ZS9yNPYV2TMnt-Cy4w9/" className="w-9 h-9 rounded-lg bg-dark-900 border border-gold-500/20 flex items-center justify-center hover:bg-gold-500 hover:text-dark-900 transition"><i className="fa-brands fa-tiktok"></i></a>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-gold-400 text-base mb-4 border-r-2 border-gold-500 pr-3">روابط سريعة</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li><button onClick={() => setCurrentTab('home')} className="hover:text-gold-400 transition">الرئيسية</button></li>
+                    <li><button onClick={() => setCurrentTab('services')} className="hover:text-gold-400 transition">الخدمات والأسعار</button></li>
+                    <li><button onClick={() => setCurrentTab('gallery')} className="hover:text-gold-400 transition">معرض الصور</button></li>
+                    <li><button onClick={() => setCurrentTab('booking')} className="hover:text-gold-400 transition">حجز المواعيد</button></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-gold-400 text-base mb-4 border-r-2 border-gold-500 pr-3">معلومات الاتصال</h4>
+                  <ul className="space-y-3 text-sm text-gray-300">
+                    <li className="flex items-center gap-3">
+                      <i className="fa-solid fa-phone text-gold-500"></i>
+                      <span>{settings.phone}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <i className="fa-solid fa-location-dot text-gold-500 mt-1"></i>
+                      <span>{settings.address}</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <i className="fa-solid fa-clock text-gold-500"></i>
+                      <span>مفتوح يومياً (12 ظهراً - 12 مساءً)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500">
+                <p>جميع الحقوق محفوظة © {new Date().getFullYear()} صالون الحلاق محمد شرود</p>
+                <p className="mt-2 sm:mt-0">MOSTAFA SHAROUDتصميم وتطوير ويب احترافي للصالونات</p>
+              </div>
+            </div>
+          </footer>
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 1. HOME VIEW COMPONENT
+    // ==========================================
+    function HomeView({ settings, services, reviews, onNavigate, onSelectBooking }) {
+      return (
+        <div className="space-y-16">
+          
+          {/* Hero Section */}
+          <section className="relative min-h-[85vh] flex items-center justify-center bg-cover bg-center overflow-hidden"
+                   style={{ backgroundImage: `linear-gradient(to bottom, rgba(12, 13, 14, 0.85), rgba(12, 13, 14, 0.95)), url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1600&q=80')` }}>
+            <div className="absolute inset-0 bg-gradient-to-r from-dark-900/90 via-dark-900/60 to-dark-900/90"></div>
+            
+            <div className="relative max-w-5xl mx-auto px-4 text-center space-y-6 py-12">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold-500/40 bg-dark-800/80 text-gold-400 text-sm font-semibold mb-2">
+                <i className="fa-solid fa-crown text-xs"></i>
+                <span>الخيارات الفاخرة للرجل الأنيق</span>
+              </div>
+              
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-tight font-tajawal">
+                {settings.heroTitle}
+              </h1>
+              
+              <p className="text-lg sm:text-2xl text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
+                {settings.heroSubtitle}
+              </p>
+
+              <div className="pt-6 flex flex-wrap justify-center items-center gap-4">
+                <button
+                  onClick={() => onNavigate('booking')}
+                  className="gold-button px-8 py-4 rounded-xl text-lg font-extrabold shadow-xl hover:scale-105 transition transform flex items-center gap-3"
+                >
+                  <i className="fa-solid fa-calendar-check"></i>
+                  <span>احجز موعدك أونلاين</span>
+                </button>
+
+                <a
+                  href={`tel:${settings.phone}`}
+                  className="bg-dark-800/90 hover:bg-dark-700 text-gray-200 border border-gold-500/30 px-6 py-4 rounded-xl text-lg font-bold transition flex items-center gap-3"
+                >
+                  <i className="fa-solid fa-phone text-gold-500"></i>
+                  <span>اتصل بنا مباشرة</span>
+                </a>
+              </div>
+
+              {/* Badges / Guarantees */}
+              <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-right">
+                {[
+                  { title: '+10 سنوات خبرة', desc: 'في أحدث الصيحات', icon: 'fa-award' },
+                  { title: 'تعقيم 100%', desc: 'أدوات مغلفة لكل زبون', icon: 'fa-shield-halved' },
+                  { title: 'بدون إنتظار', desc: 'التزام تام بالحجز', icon: 'fa-clock' },
+                  { title: 'منتجات عالمية', desc: 'عناية فاخرة بالبشرة', icon: 'fa-pump-soap' },
+                ].map((stat, i) => (
+                  <div key={i} className="glass-card p-4 rounded-xl flex items-center gap-3 border-r-2 border-gold-500">
+                    <i className={`fa-solid ${stat.icon} text-2xl text-gold-500`}></i>
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{stat.title}</h4>
+                      <p className="text-xs text-gray-400">{stat.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* About Section */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="inline-block border-r-4 border-gold-500 pr-3">
+                  <span className="text-gold-500 text-sm font-bold uppercase tracking-wider">عن الصالون</span>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-1">تجربة حلاقة استثنائية ترتقي بمظهرك</h2>
+                </div>
+                <p className="text-gray-300 leading-relaxed text-base">
+                  في صالون **محمد شرود**، نجمع بين الدقة العالية في تفاصيل القص والتحديد، وبين تجربة الاسترخاء والرفاهية. نسعى دائماً لتقديم أفضل الخدمات الاستشارية لتحديد القصة والستايل الأنسب لشكل وجهك ونوع شعرك.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    'حلاقة ذقن بالبخار والزيوت الطبيعية الترطيبية',
+                    'عناية كاملة بالبشرة وتنظيف هيدرافيسيال',
+                    'أجواء مريحة وهادئة مع ضيافة متميزة',
+                    'استخدام أدوات الحلاقة ذات الاستخدام الواحد لتأمين السلامة الصحيّة'
+                  ].map((feat, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-sm text-gray-200">
+                      <div className="w-5 h-5 rounded-full bg-gold-500/20 text-gold-500 flex items-center justify-center text-xs">
+                        <i className="fa-solid fa-check"></i>
+                      </div>
+                      <span>{feat}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={() => onNavigate('services')}
+                    className="text-gold-400 font-bold underline underline-offset-8 hover:text-gold-300 transition flex items-center gap-2"
+                  >
+                    <span>استكشف كافة الخدمات والأسعار</span>
+                    <i className="fa-solid fa-arrow-left text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="relative rounded-2xl overflow-hidden border-2 border-gold-500/20 shadow-2xl">
+                  <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80" alt="الحلاق محمد شرود" className="w-full h-[400px] object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent"></div>
+                  <div className="absolute bottom-6 right-6 left-6 glass-card p-4 rounded-xl flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-400">احجز الآن ووفّر وقتك</p>
+                      <h4 className="font-bold text-white text-base">مواعيد دقيقة بدون انتظار</h4>
+                    </div>
+                    <button onClick={() => onNavigate('booking')} className="gold-button px-4 py-2 rounded-lg text-xs font-bold">احجز الموعد</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Featured Services Section */}
+          <section className="bg-dark-800/50 py-16 border-y border-gold-500/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
+                <h2 className="text-3xl font-extrabold text-white">أبرز الخدمات والباكجات</h2>
+                <p className="text-gray-400 text-sm">اختر الخدمة المناسبة لك واحجز موعدك بضغطة زر واحدة</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {services.filter(s => s.active).slice(0, 3).map((srv) => (
+                  <div key={srv.id} className="glass-card rounded-2xl overflow-hidden glass-card-hover flex flex-col justify-between">
+                    <div>
+                      <div className="h-48 overflow-hidden relative">
+                        <img src={srv.image} alt={srv.name} className="w-full h-full object-cover" />
+                        <span className="absolute top-3 right-3 bg-dark-900/90 text-gold-400 border border-gold-500/30 text-xs px-3 py-1 rounded-full font-bold">
+                          {srv.category}
+                        </span>
+                      </div>
+                      <div className="p-6 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-lg text-white">{srv.name}</h3>
+                          <span className="text-gold-400 font-extrabold text-lg">{srv.price} ج.م</span>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{srv.description}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <i className="fa-solid fa-clock text-gold-500"></i>
+                          <span>المدة المتوقعة: {srv.duration} دقيقة</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6 pt-0">
+                      <button
+                        onClick={() => onSelectBooking(srv)}
+                        className="w-full gold-button py-2.5 rounded-xl font-bold text-sm shadow flex items-center justify-center gap-2"
+                      >
+                        <i className="fa-solid fa-calendar-plus"></i>
+                        <span>حجز هذه الخدمة</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10 text-center">
+                <button
+                  onClick={() => onNavigate('services')}
+                  className="bg-dark-800 hover:bg-dark-700 text-gold-400 border border-gold-500/30 px-8 py-3 rounded-xl font-bold text-sm transition inline-flex items-center gap-2"
+                >
+                  <span>عرض جميع الخدمات والتفاصيل</span>
+                  <i className="fa-solid fa-arrow-left"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Testimonials / Reviews */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-gold-500 text-xs font-bold uppercase tracking-widest">آراء العملاء</span>
+              <h2 className="text-3xl font-extrabold text-white mt-1">ماذا يقول زبائننا الكرام؟</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {reviews.filter(r => r.status === 'approved').map((rev) => (
+                <div key={rev.id} className="glass-card p-6 rounded-2xl flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-1 text-gold-500">
+                      {[...Array(rev.rating)].map((_, i) => (
+                        <i key={i} className="fa-solid fa-star text-sm"></i>
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-300 italic leading-relaxed">"{rev.comment}"</p>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-dark-700 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{rev.name}</h4>
+                      <span className="text-xs text-gray-500">{rev.date}</span>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-500 flex items-center justify-center font-bold text-xs">
+                      {rev.name.charAt(0)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Business Hours & Location Quick Callout */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="glass-card rounded-3xl p-8 border border-gold-500/30 bg-gradient-to-br from-dark-800 via-dark-900 to-dark-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-bold text-white">مواعيد العمل والعنوان</h3>
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    يسعدنا استقبالكم في صالوننا الفاخر. نوصي دائماً بالحجز المسبق لتجنب أوقات الانتظار.
+                  </p>
+                  <div className="space-y-3 pt-2 text-sm text-gray-200">
+                    <div className="flex items-center gap-3">
+                      <i className="fa-solid fa-clock text-gold-500 text-lg"></i>
+                      <span>{settings.workHours}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <i className="fa-solid fa-location-dot text-gold-500 text-lg"></i>
+                      <span>{settings.address}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-center md:justify-end gap-4">
+                  <button
+                    onClick={() => onNavigate('contact')}
+                    className="gold-button px-6 py-3.5 rounded-xl text-sm font-bold shadow"
+                  >
+                    عرض الخريطة والتفاصيل
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 2. SERVICES & PRICING VIEW
+    // ==========================================
+    function ServicesView({ services, onSelectBooking }) {
+      const [selectedCat, setSelectedCat] = useState('الكل');
+
+      const categories = ['الكل', 'شعر', 'ذقن', 'العناية بالبشرة', 'باقات شاملة'];
+
+      const filteredServices = services.filter(s => {
+        if (!s.active) return false;
+        if (selectedCat === 'الكل') return true;
+        return s.category === selectedCat;
+      });
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+          
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">قائمة الخدمات والأسعار</h2>
+            <p className="text-gray-400 text-sm">اختر من بين باقة واسعة من خدمات الحلاقة والعناية الشخصية للرجال</p>
+          </div>
+
+          {/* Category Filter Tabs */}
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCat(cat)}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                  selectedCat === cat
+                    ? 'gold-button shadow-lg'
+                    : 'bg-dark-800 text-gray-300 border border-gold-500/20 hover:border-gold-500/50'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Services Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredServices.map((srv) => (
+              <div key={srv.id} className="glass-card rounded-2xl overflow-hidden glass-card-hover flex flex-col justify-between">
+                <div>
+                  <div className="h-52 overflow-hidden relative">
+                    <img src={srv.image} alt={srv.name} className="w-full h-full object-cover" />
+                    <span className="absolute top-3 right-3 bg-dark-900/90 text-gold-400 border border-gold-500/30 text-xs px-3 py-1 rounded-full font-bold">
+                      {srv.category}
+                    </span>
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-bold text-lg text-white">{srv.name}</h3>
+                      <span className="text-gold-400 font-extrabold text-lg">{srv.price} ج.م</span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed min-h-[40px]">{srv.description}</p>
+                    <div className="flex items-center gap-2 text-xs text-gold-500/90 font-semibold pt-2 border-t border-dark-700">
+                      <i className="fa-solid fa-stopwatch"></i>
+                      <span>المدة: {srv.duration} دقيقة</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6 pt-0">
+                  <button
+                    onClick={() => onSelectBooking(srv)}
+                    className="w-full gold-button py-3 rounded-xl font-bold text-sm shadow flex items-center justify-center gap-2"
+                  >
+                    <i className="fa-solid fa-calendar-check"></i>
+                    <span>حجز الخدمة الآن</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 3. GALLERY VIEW COMPONENT
+    // ==========================================
+    function GalleryView({ gallery, onOpenLightbox }) {
+      const [filter, setFilter] = useState('الكل');
+
+      const tabs = ['الكل', 'قصات شعر', 'تحديد ذقن', 'قبل وبعد'];
+
+      const filteredGallery = gallery.filter(item => filter === 'الكل' || item.category === filter);
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+          
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">معرض الأعمال والقصات</h2>
+            <p className="text-gray-400 text-sm">استعرض أحدث الأعمال والتصاميم من أيدي الحلاق محمد شرود</p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-3">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setFilter(tab)}
+                className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  filter === tab
+                    ? 'gold-button shadow-md'
+                    : 'bg-dark-800 text-gray-400 border border-gold-500/20 hover:text-white'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {filteredGallery.map((item) => (
+              <div 
+                key={item.id} 
+                onClick={() => onOpenLightbox(item)}
+                className="group relative h-72 rounded-2xl overflow-hidden glass-card cursor-pointer border border-gold-500/20"
+              >
+                <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent opacity-80 group-hover:opacity-95 transition"></div>
+                <div className="absolute bottom-4 right-4 left-4 flex justify-between items-end">
+                  <div>
+                    <span className="text-xs text-gold-400 font-bold bg-dark-900/80 px-2.5 py-1 rounded-md border border-gold-500/30">{item.category}</span>
+                    <h4 className="text-white font-bold text-base mt-2">{item.title}</h4>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-gold-500 text-dark-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+                    <i className="fa-solid fa-expand text-sm"></i>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 4. ONLINE BOOKING WIZARD VIEW
+    // ==========================================
+    function BookingView({ services, bookings, selectedService, onBookingCreated, settings }) {
+      const [step, setStep] = useState(1);
+      
+      // Form fields
+      const [chosenService, setChosenService] = useState(selectedService || services[0] || null);
+      const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+      const [selectedTime, setSelectedTime] = useState('16:00');
+      const [customerName, setCustomerName] = useState('');
+      const [phone, setPhone] = useState('');
+      const [notes, setNotes] = useState('');
+
+      const [phoneError, setPhoneError] = useState('');
+      const [confirmedBooking, setConfirmedBooking] = useState(null);
+
+      // Egyptian phone validation logic
+      const validateEgyptianPhone = (num) => {
+        const regex = /^01[0125][0-9]{8}$/;
+        return regex.test(num);
+      };
+
+      // Slots generation logic
+      const availableTimeSlots = useMemo(() => {
+        const times = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
+        // Filter out times already booked on selectedDate
+        const bookedTimesOnDate = bookings
+          .filter(b => b.date === selectedDate && b.status !== 'ملغي')
+          .map(b => b.time);
+
+        return times.map(t => ({
+          time: t,
+          isBooked: bookedTimesOnDate.includes(t)
+        }));
+      }, [selectedDate, bookings]);
+
+      const handleSubmitBooking = (e) => {
+        e.preventDefault();
+        if (!validateEgyptianPhone(phone)) {
+          setPhoneError('يرجى إدخال رقم هاتف مصري صحيح مكون من 11 رقم ويبدأ بـ (010, 011, 012, 015)');
+          return;
+        }
+        setPhoneError('');
+
+        const newBooking = {
+          id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
+          customerName,
+          phone,
+          serviceId: chosenService.id,
+          serviceName: chosenService.name,
+          price: chosenService.price,
+          date: selectedDate,
+          time: selectedTime,
+          status: 'معلق',
+          notes
+        };
+
+        onBookingCreated(newBooking);
+        setConfirmedBooking(newBooking);
+        setStep(4); // Confirmation step
+      };
+
+      const formatWhatsAppMessage = (bk) => {
+        const text = `أهلاً حلاق محمد شرود، أود تأكيد حجزي عبر الموقع:
+📌 الاسم: ${bk.customerName}
+📞 الهاتف: ${bk.phone}
+✂️ الخدمة: ${bk.serviceName} (${bk.price} ج.م)
+📅 التاريخ: ${bk.date}
+⏰ الموعد: ${bk.time}
+📝 ملاحظات: ${bk.notes || 'لا يوجد'}`;
+        return `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(text)}`;
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+          
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <h2 className="text-3xl font-extrabold text-white">حجز موعد أونلاين</h2>
+            <p className="text-gray-400 text-sm">احجز حلاقتك القادمة بكل سهولة واضمن عدم الانتظار في الصالون</p>
+          </div>
+
+          {/* Stepper Header */}
+          {step < 4 && (
+            <div className="flex justify-center items-center gap-4 sm:gap-8 pb-4">
+              {[
+                { num: 1, label: 'اختيار الخدمة' },
+                { num: 2, label: 'التاريخ والموعد' },
+                { num: 3, label: 'بيانات العميل' },
+              ].map((s) => (
+                <div key={s.num} className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                    step === s.num ? 'bg-gold-500 text-dark-900 shadow-lg' : step > s.num ? 'bg-emerald-600 text-white' : 'bg-dark-800 text-gray-500 border border-dark-700'
+                  }`}>
+                    {step > s.num ? <i className="fa-solid fa-check"></i> : s.num}
+                  </div>
+                  <span className={`text-xs font-bold hidden sm:inline ${step === s.num ? 'text-gold-400' : 'text-gray-400'}`}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* STEP 1: SELECT SERVICE */}
+          {step === 1 && (
+            <div className="glass-card rounded-2xl p-6 space-y-6">
+              <h3 className="font-bold text-lg text-gold-400 border-r-2 border-gold-500 pr-3">1. اختر الخدمة المطلوبة</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {services.filter(s => s.active).map((srv) => (
+                  <div
+                    key={srv.id}
+                    onClick={() => setChosenService(srv)}
+                    className={`p-4 rounded-xl border cursor-pointer transition flex items-center justify-between ${
+                      chosenService?.id === srv.id
+                        ? 'border-gold-500 bg-gold-500/10 shadow-lg'
+                        : 'border-dark-700 bg-dark-800/60 hover:border-gold-500/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <img src={srv.image} alt={srv.name} className="w-14 h-14 rounded-lg object-cover" />
+                      <div>
+                        <h4 className="font-bold text-sm text-white">{srv.name}</h4>
+                        <p className="text-xs text-gray-400">{srv.duration} دقيقة</p>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <span className="font-extrabold text-gold-400 text-sm">{srv.price} ج.م</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button
+                  disabled={!chosenService}
+                  onClick={() => setStep(2)}
+                  className="gold-button px-8 py-3 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span>التالي: اختر الموعد</span>
+                  <i className="fa-solid fa-arrow-left"></i>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: SELECT DATE & TIME */}
+          {step === 2 && (
+            <div className="glass-card rounded-2xl p-6 space-y-6">
+              <h3 className="font-bold text-lg text-gold-400 border-r-2 border-gold-500 pr-3">2. اختر اليوم والوقت المتاح</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-2">تاريخ الحجز</label>
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-2">الأوقات المتاحة لهذا اليوم</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableTimeSlots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        disabled={slot.isBooked}
+                        onClick={() => setSelectedTime(slot.time)}
+                        className={`p-2.5 rounded-lg text-xs font-bold border transition ${
+                          slot.isBooked
+                            ? 'bg-rose-900/20 border-rose-900/40 text-rose-500 cursor-not-allowed line-through'
+                            : selectedTime === slot.time
+                            ? 'bg-gold-500 text-dark-900 border-gold-500 font-extrabold shadow'
+                            : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-gold-500/40'
+                        }`}
+                      >
+                        {slot.time} {slot.isBooked && '(محجوز)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-4">
+                <button
+                  onClick={() => setStep(1)}
+                  className="bg-dark-800 text-gray-400 hover:text-white px-6 py-3 rounded-xl font-bold text-sm"
+                >
+                  الرجوع
+                </button>
+                <button
+                  disabled={!selectedTime}
+                  onClick={() => setStep(3)}
+                  className="gold-button px-8 py-3 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span>التالي: إدخال البيانات</span>
+                  <i className="fa-solid fa-arrow-left"></i>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: CUSTOMER DETAILS & VALIDATION */}
+          {step === 3 && (
+            <form onSubmit={handleSubmitBooking} className="glass-card rounded-2xl p-6 space-y-6">
+              <h3 className="font-bold text-lg text-gold-400 border-r-2 border-gold-500 pr-3">3. تفاصيل العميل والتأكيد</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-2">الاسم بالكامل *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="أدخل اسمك الثلاثي"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-2">رقم الهاتف (واتساب) *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="01012345678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500 text-sm dir-ltr text-right"
+                  />
+                  {phoneError && <p className="text-xs text-rose-400 mt-1">{phoneError}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-2">ملاحظات إضافية (اختياري)</label>
+                  <textarea
+                    rows="3"
+                    placeholder="أي تفاصيل خاصة ترغب في إبلاغ الحلاق بها..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500 text-sm"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Booking Summary Box */}
+              <div className="bg-dark-800/80 p-4 rounded-xl border border-gold-500/20 space-y-2 text-xs">
+                <div className="flex justify-between text-gray-300">
+                  <span>الخدمة المختارة:</span>
+                  <span className="font-bold text-gold-400">{chosenService?.name}</span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>التاريخ والوقت:</span>
+                  <span className="font-bold text-white">{selectedDate} الساعة {selectedTime}</span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>إجمالي السعر:</span>
+                  <span className="font-extrabold text-gold-400 text-sm">{chosenService?.price} ج.م</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="bg-dark-800 text-gray-400 hover:text-white px-6 py-3 rounded-xl font-bold text-sm"
+                >
+                  الرجوع
+                </button>
+                <button
+                  type="submit"
+                  className="gold-button px-8 py-3 rounded-xl font-extrabold text-sm flex items-center gap-2 shadow-lg"
+                >
+                  <i className="fa-solid fa-circle-check"></i>
+                  <span>تأكيد الحجز النهائي</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* STEP 4: CONFIRMATION & WHATSAPP ACTION */}
+          {step === 4 && confirmedBooking && (
+            <div className="glass-card rounded-2xl p-8 text-center space-y-6 animate-fade-in border-2 border-emerald-500/40">
+              <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-3xl">
+                <i className="fa-solid fa-circle-check"></i>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-extrabold text-white">تم استلام طلب الحجز بنجاح!</h3>
+                <p className="text-xs text-gray-400">كود الحجز المرجعي: <span className="text-gold-400 font-mono font-bold">{confirmedBooking.id}</span></p>
+              </div>
+
+              <div className="bg-dark-800 p-4 rounded-xl border border-gold-500/20 text-right space-y-2 text-xs max-w-md mx-auto">
+                <p className="text-gray-300"><strong className="text-white">الاسم:</strong> {confirmedBooking.customerName}</p>
+                <p className="text-gray-300"><strong className="text-white">الخدمة:</strong> {confirmedBooking.serviceName}</p>
+                <p className="text-gray-300"><strong className="text-white">الموعد:</strong> {confirmedBooking.date} الساعة {confirmedBooking.time}</p>
+                <p className="text-gray-300"><strong className="text-white">المبلغ المطلوب:</strong> {confirmedBooking.price} ج.م</p>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row justify-center gap-4">
+                <a
+                  href={formatWhatsAppMessage(confirmedBooking)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <i className="fa-brands fa-whatsapp text-lg"></i>
+                  <span>إرسال التفاصيل مباشرة عبر واتساب</span>
+                </a>
+
+                <button
+                  onClick={() => {
+                    setStep(1);
+                    setCustomerName('');
+                    setPhone('');
+                    setNotes('');
+                  }}
+                  className="bg-dark-800 hover:bg-dark-700 text-gray-300 px-6 py-3.5 rounded-xl font-bold text-sm border border-gold-500/20"
+                >
+                  حجز موعد جديد
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 5. CONTACT VIEW COMPONENT
+    // ==========================================
+    function ContactView({ settings, showToast }) {
+      const [formData, setFormData] = useState({ name: '', phone: '', msg: '' });
+
+      const handleContactSubmit = (e) => {
+        e.preventDefault();
+        showToast('تم إرسال رسالتك بنجاح، وسنتواصل معك قريباً');
+        setFormData({ name: '', phone: '', msg: '' });
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+          
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white">تواصل معنا</h2>
+            <p className="text-gray-400 text-sm">نحن دائماً بخدمتكم للاستفسارات والحجوزات الفورية</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Contact Details & Info Card */}
+            <div className="space-y-6">
+              <div className="glass-card p-6 rounded-2xl space-y-6">
+                <h3 className="font-bold text-xl text-gold-400 border-r-2 border-gold-500 pr-3">معلومات الوصول والاتصال</h3>
+
+                <div className="space-y-4 text-sm">
+                  <div className="flex items-start gap-4 p-3 bg-dark-800/50 rounded-xl border border-gold-500/10">
+                    <div className="w-10 h-10 rounded-lg bg-gold-500/20 text-gold-500 flex items-center justify-center shrink-0">
+                      <i className="fa-solid fa-phone"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">رقم الهاتف / واتساب</h4>
+                      <p className="text-gray-300 font-mono mt-1">{settings.phone}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-3 bg-dark-800/50 rounded-xl border border-gold-500/10">
+                    <div className="w-10 h-10 rounded-lg bg-gold-500/20 text-gold-500 flex items-center justify-center shrink-0">
+                      <i className="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">العنوان والتواجد</h4>
+                      <p className="text-gray-300 mt-1">{settings.address}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-3 bg-dark-800/50 rounded-xl border border-gold-500/10">
+                    <div className="w-10 h-10 rounded-lg bg-gold-500/20 text-gold-500 flex items-center justify-center shrink-0">
+                      <i className="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">ساعات العمل الرسمية</h4>
+                      <p className="text-gray-300 mt-1">{settings.workHours}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="pt-2">
+                  <h4 className="text-xs font-bold text-gray-400 mb-3">تابعونا على مواقع التواصل الاجتماعي</h4>
+                  <div className="flex gap-3">
+                    <a href="https://www.facebook.com/share/1MfnnMFMnu/" className="w-10 h-10 rounded-xl bg-dark-800 text-gold-400 border border-gold-500/30 flex items-center justify-center hover:bg-gold-500 hover:text-dark-900 transition">
+                      <i className="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="https://www.instagram.com/mohamed_sharoud74?vrfl=cTB0MnlwcDhvdHF3" className="w-10 h-10 rounded-xl bg-dark-800 text-gold-400 border border-gold-500/30 flex items-center justify-center hover:bg-gold-500 hover:text-dark-900 transition">
+                      <i className="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="https://vm.tiktok.com/ZS9yNPYV2TMnt-Cy4w9/" className="w-10 h-10 rounded-xl bg-dark-800 text-gold-400 border border-gold-500/30 flex items-center justify-center hover:bg-gold-500 hover:text-dark-900 transition">
+                      <i className="fa-brands fa-tiktok"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Map Placeholder Frame */}
+              <div className="glass-card p-2 rounded-2xl h-64 overflow-hidden relative">
+                <iframe
+                  title="Google Map Location"
+                  className="w-full h-full rounded-xl filter grayscale contrast-125 opacity-80"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3453.1812839212!2d31.2357116!3d30.0444196!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzDCsDAyJzM5LjkiTiAzM8KwMTQnMDguNiJF!5e0!3m2!1sen!2seg!4v1620000000000!5m2!1sen!2seg"
+                  loading="lazy"
+                ></iframe>
+              </div>
+            </div>
+
+            {/* Direct Message Form */}
+            <form onSubmit={handleContactSubmit} className="glass-card p-6 sm:p-8 rounded-2xl space-y-4">
+              <h3 className="font-bold text-xl text-gold-400 border-r-2 border-gold-500 pr-3 mb-4">أرسل لنا رسالة سريعة</h3>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-300 mb-2">الاسم بالكامل</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="اسمك"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-gold-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-300 mb-2">رقم الهاتف</label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="010XXXXXXXX"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-gold-500 text-right dir-ltr"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-300 mb-2">الرسالة أو الاستفسار</label>
+                <textarea
+                  rows="4"
+                  required
+                  placeholder="اكتب استفسارك هنا..."
+                  value={formData.msg}
+                  onChange={(e) => setFormData({ ...formData, msg: e.target.value })}
+                  className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-gold-500"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full gold-button py-3.5 rounded-xl font-bold text-sm shadow flex items-center justify-center gap-2"
+              >
+                <i className="fa-solid fa-paper-plane"></i>
+                <span>إرسال الرسالة</span>
+              </button>
+            </form>
+
+          </div>
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 6. ADMIN LOGIN SCREEN
+    // ==========================================
+    function AdminLoginView({ settings, onLoginSuccess, showToast }) {
+      const [email, setEmail] = useState('admin@sharoud.com');
+      const [password, setPassword] = useState('');
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === settings.adminPass) {
+          onLoginSuccess();
+        } else {
+          showToast('كلمة المرور غير صحيحة!', 'error');
+        }
+      };
+
+      return (
+        <div className="max-w-md mx-auto px-4 py-20">
+          <div className="glass-card p-8 rounded-2xl border border-gold-500/30 space-y-6">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 bg-gold-500/20 text-gold-500 rounded-full flex items-center justify-center mx-auto text-2xl border border-gold-500/30">
+                <i className="fa-solid fa-user-shield"></i>
+              </div>
+              <h2 className="text-2xl font-extrabold text-white">تسجيل دخول الأدمن</h2>
+              <p className="text-xs text-gray-400">خاص بإدارة صالون الحلاق محمد شرود</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-300 mb-1">البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-gold-500 text-left dir-ltr"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-300 mb-1">كلمة المرور</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-dark-800 border border-gold-500/30 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-gold-500"
+                />
+                <p className="text-[10px] text-gray-500 mt-1">: <span className="text-gold-400 font-mono"></span></p>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full gold-button py-3 rounded-xl font-bold text-sm shadow flex items-center justify-center gap-2"
+              >
+                <i className="fa-solid fa-right-to-bracket"></i>
+                <span>دخول لوحة التحكم</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 7. ADMIN DASHBOARD & PANELS
+    // ==========================================
+    function AdminDashboard({ 
+      services, setServices,
+      gallery, setGallery,
+      reviews, setReviews,
+      bookings, setBookings,
+      customers, setCustomers,
+      settings, setSettings,
+      showToast, onLogout 
+    }) {
+      const [adminTab, setAdminTab] = useState('overview'); // overview, bookings, services, customers, gallery, reviews, settings
+
+      // Calculated stats
+      const totalRevenue = useMemo(() => {
+        return bookings
+          .filter(b => b.status === 'مكتمل' || b.status === 'مؤكد')
+          .reduce((sum, b) => sum + (b.price || 0), 0);
+      }, [bookings]);
+
+      const pendingCount = useMemo(() => {
+        return bookings.filter(b => b.status === 'معلق').length;
+      }, [bookings]);
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          
+          {/* Admin Header Bar */}
+          <div className="glass-card p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 border border-gold-500/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gold-500 text-dark-900 font-bold flex items-center justify-center">
+                <i className="fa-solid fa-sliders"></i>
+              </div>
+              <div>
+                <h2 className="font-extrabold text-lg text-white">لوحة تحكم الصالون</h2>
+                <p className="text-xs text-emerald-400 font-semibold">مرحباً بك، محمد شرود (مسؤول النظام)</p>
+              </div>
+            </div>
+
+            <button
+              onClick={onLogout}
+              className="bg-rose-900/30 hover:bg-rose-900/50 text-rose-300 border border-rose-500/30 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2"
+            >
+              <i className="fa-solid fa-right-from-bracket"></i>
+              <span>تسجيل الخروج</span>
+            </button>
+          </div>
+
+          {/* Admin Navigation Sub-Tabs */}
+          <div className="flex flex-wrap gap-2 border-b border-dark-700 pb-3 overflow-x-auto">
+            {[
+              { id: 'overview', label: 'الرئيسية والإحصائيات', icon: 'fa-chart-pie' },
+              { id: 'bookings', label: 'إدارة الحجوزات', icon: 'fa-calendar-days' },
+              { id: 'services', label: 'إدارة الخدمات', icon: 'fa-list' },
+              { id: 'customers', label: 'سجل العملاء', icon: 'fa-users' },
+              { id: 'gallery', label: 'المعرض والقتات', icon: 'fa-images' },
+              { id: 'reviews', label: 'التقييمات', icon: 'fa-star' },
+              { id: 'settings', label: 'إعدادات الموقع', icon: 'fa-gear' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setAdminTab(tab.id)}
+                className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition whitespace-nowrap ${
+                  adminTab === tab.id
+                    ? 'gold-button shadow'
+                    : 'bg-dark-800 text-gray-400 hover:text-white border border-dark-700'
+                }`}
+              >
+                <i className={`fa-solid ${tab.icon}`}></i>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* ADMIN OVERVIEW / METRICS */}
+          {adminTab === 'overview' && (
+            <div className="space-y-8">
+              
+              {/* Metric Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="glass-card p-5 rounded-2xl border-r-4 border-gold-500">
+                  <p className="text-xs text-gray-400 font-bold">إجمالي الحجوزات</p>
+                  <h3 className="text-2xl font-black text-white mt-1">{bookings.length}</h3>
+                </div>
+
+                <div className="glass-card p-5 rounded-2xl border-r-4 border-emerald-500">
+                  <p className="text-xs text-gray-400 font-bold">إجمالي الإيرادات (ج.م)</p>
+                  <h3 className="text-2xl font-black text-emerald-400 mt-1">{totalRevenue} ج.م</h3>
+                </div>
+
+                <div className="glass-card p-5 rounded-2xl border-r-4 border-amber-500">
+                  <p className="text-xs text-gray-400 font-bold">الحجوزات المعلقة</p>
+                  <h3 className="text-2xl font-black text-amber-400 mt-1">{pendingCount}</h3>
+                </div>
+
+                <div className="glass-card p-5 rounded-2xl border-r-4 border-blue-500">
+                  <p className="text-xs text-gray-400 font-bold">إجمالي العملاء</p>
+                  <h3 className="text-2xl font-black text-blue-400 mt-1">{customers.length}</h3>
+                </div>
+              </div>
+
+              {/* SVG Chart Preview */}
+              <div className="glass-card p-6 rounded-2xl space-y-4">
+                <h3 className="font-bold text-base text-gold-400">معدل الحجوزات خلال الأيام الأخيرة</h3>
+                <div className="h-48 w-full flex items-end justify-between gap-2 pt-8 px-4 border-b border-dark-700">
+                  {[35, 55, 40, 75, 90, 60, 85].map((val, idx) => (
+                    <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                      <div 
+                        style={{ height: `${val}%` }} 
+                        className="w-full max-w-[40px] bg-gradient-to-t from-gold-600 to-gold-400 rounded-t-lg transition-all duration-500 hover:opacity-80 relative group"
+                      >
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gold-400 opacity-0 group-hover:opacity-100 transition">
+                          {val*10}ج.م
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 font-bold">اليوم {idx+1}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Bookings Quick Table */}
+              <div className="glass-card p-6 rounded-2xl space-y-4">
+                <h3 className="font-bold text-base text-gold-400">آخر الطلبات القادمة</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-right">
+                    <thead>
+                      <tr className="border-b border-dark-700 text-gray-400">
+                        <th className="p-3">العميل</th>
+                        <th className="p-3">الخدمة</th>
+                        <th className="p-3">الموعد</th>
+                        <th className="p-3">السعر</th>
+                        <th className="p-3">الحالة</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-dark-800">
+                      {bookings.slice(0, 5).map(b => (
+                        <tr key={b.id} className="hover:bg-dark-800/50">
+                          <td className="p-3 font-bold text-white">{b.customerName}</td>
+                          <td className="p-3 text-gray-300">{b.serviceName}</td>
+                          <td className="p-3 text-gray-300">{b.date} ({b.time})</td>
+                          <td className="p-3 font-bold text-gold-400">{b.price} ج.م</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${
+                              b.status === 'مؤكد' ? 'bg-emerald-900/40 text-emerald-400' :
+                              b.status === 'مكتمل' ? 'bg-blue-900/40 text-blue-400' :
+                              b.status === 'ملغي' ? 'bg-rose-900/40 text-rose-400' : 'bg-amber-900/40 text-amber-400'
+                            }`}>{b.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ADMIN BOOKINGS MANAGEMENT */}
+          {adminTab === 'bookings' && (
+            <AdminBookingsPanel 
+              bookings={bookings} 
+              setBookings={setBookings} 
+              services={services}
+              showToast={showToast}
+            />
+          )}
+
+          {/* ADMIN SERVICES MANAGEMENT */}
+          {adminTab === 'services' && (
+            <AdminServicesPanel 
+              services={services} 
+              setServices={setServices} 
+              showToast={showToast} 
+            />
+          )}
+
+          {/* ADMIN CUSTOMERS LIST */}
+          {adminTab === 'customers' && (
+            <AdminCustomersPanel customers={customers} setCustomers={setCustomers} showToast={showToast} />
+          )}
+
+          {/* ADMIN GALLERY MANAGEMENT */}
+          {adminTab === 'gallery' && (
+            <AdminGalleryPanel gallery={gallery} setGallery={setGallery} showToast={showToast} />
+          )}
+
+          {/* ADMIN REVIEWS MANAGEMENT */}
+          {adminTab === 'reviews' && (
+            <AdminReviewsPanel reviews={reviews} setReviews={setReviews} showToast={showToast} />
+          )}
+
+          {/* ADMIN SITE SETTINGS */}
+          {adminTab === 'settings' && (
+            <AdminSettingsPanel settings={settings} setSettings={setSettings} showToast={showToast} />
+          )}
+
+        </div>
+      );
+    }
+
+    // ==========================================
+    // ADMIN SUB-PANELS
+    // ==========================================
+
+    // 1. BOOKINGS PANEL
+    function AdminBookingsPanel({ bookings, setBookings, services, showToast }) {
+      const [filterStatus, setFilterStatus] = useState('الكل');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [showManualModal, setShowManualModal] = useState(false);
+
+      // Manual booking form
+      const [mName, setMName] = useState('');
+      const [mPhone, setMPhone] = useState('');
+      const [mService, setMService] = useState(services[0] || null);
+      const [mDate, setMDate] = useState(new Date().toISOString().split('T')[0]);
+      const [mTime, setMTime] = useState('17:00');
+
+      const filteredBookings = bookings.filter(b => {
+        const matchesStatus = filterStatus === 'الكل' || b.status === filterStatus;
+        const matchesQuery = b.customerName.includes(searchQuery) || b.phone.includes(searchQuery);
+        return matchesStatus && matchesQuery;
+      });
+
+      const handleUpdateStatus = (id, newStatus) => {
+        setBookings(bookings.map(b => b.id === id ? { ...b, status: newStatus } : b));
+        showToast(`تم تغيير حالة الحجز إلى: ${newStatus}`);
+      };
+
+      const handleDeleteBooking = (id) => {
+        if (confirm('هل أنت تأكد من حذف هذا الحجز؟')) {
+          setBookings(bookings.filter(b => b.id !== id));
+          showToast('تم حذف الحجز بنجاح');
+        }
+      };
+
+      const handleAddManualBooking = (e) => {
+        e.preventDefault();
+        const newBk = {
+          id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
+          customerName: mName,
+          phone: mPhone,
+          serviceId: mService.id,
+          serviceName: mService.name,
+          price: mService.price,
+          date: mDate,
+          time: mTime,
+          status: 'مؤكد',
+          notes: 'حجز يدوي بواسطة الصالون'
+        };
+        setBookings([newBk, ...bookings]);
+        setShowManualModal(false);
+        showToast('تم إضافة الحجز اليدوي بنجاح');
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            <h3 className="font-extrabold text-xl text-white">إدارة كافة الحجوزات</h3>
+            <button
+              onClick={() => setShowManualModal(true)}
+              className="gold-button px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
+            >
+              <i className="fa-solid fa-plus"></i>
+              <span>إضافة حجز يدوي (تليفون)</span>
+            </button>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="glass-card p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between">
+            <input
+              type="text"
+              placeholder="بحث باسم العميل أو رقم الهاتف..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-xs text-white w-full sm:w-64 focus:outline-none focus:border-gold-500"
+            />
+
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {['الكل', 'معلق', 'مؤكد', 'مكتمل', 'ملغي'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setFilterStatus(st)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    filterStatus === st ? 'bg-gold-500 text-dark-900' : 'bg-dark-800 text-gray-400'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-right">
+                <thead className="bg-dark-800 text-gray-400 border-b border-dark-700">
+                  <tr>
+                    <th className="p-3">الكود</th>
+                    <th className="p-3">العميل</th>
+                    <th className="p-3">الهاتف</th>
+                    <th className="p-3">الخدمة</th>
+                    <th className="p-3">الموعد</th>
+                    <th className="p-3">السعر</th>
+                    <th className="p-3">الحالة</th>
+                    <th className="p-3 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-800">
+                  {filteredBookings.map((b) => (
+                    <tr key={b.id} className="hover:bg-dark-800/40">
+                      <td className="p-3 font-mono text-gold-400 font-bold">{b.id}</td>
+                      <td className="p-3 font-bold text-white">{b.customerName}</td>
+                      <td className="p-3 font-mono text-gray-300 dir-ltr text-right">{b.phone}</td>
+                      <td className="p-3 text-gray-300">{b.serviceName}</td>
+                      <td className="p-3 text-gray-300">{b.date} ({b.time})</td>
+                      <td className="p-3 font-bold text-gold-400">{b.price} ج.م</td>
+                      <td className="p-3">
+                        <select
+                          value={b.status}
+                          onChange={(e) => handleUpdateStatus(b.id, e.target.value)}
+                          className="bg-dark-900 border border-gold-500/30 rounded px-2 py-1 text-[11px] font-bold text-gold-400 focus:outline-none"
+                        >
+                          <option value="معلق">معلق</option>
+                          <option value="مؤكد">مؤكد</option>
+                          <option value="مكتمل">مكتمل</option>
+                          <option value="ملغي">ملغي</option>
+                        </select>
+                      </td>
+                      <td className="p-3 text-center">
+                        <div className="flex justify-center items-center gap-2">
+                          <a
+                            href={`https://wa.me/${b.phone}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-7 h-7 bg-emerald-600/30 text-emerald-400 rounded flex items-center justify-center hover:bg-emerald-600 hover:text-white transition"
+                            title="واتساب العميل"
+                          >
+                            <i className="fa-brands fa-whatsapp"></i>
+                          </a>
+                          <a
+                            href={`tel:${b.phone}`}
+                            className="w-7 h-7 bg-blue-600/30 text-blue-400 rounded flex items-center justify-center hover:bg-blue-600 hover:text-white transition"
+                            title="اتصال مباشر"
+                          >
+                            <i className="fa-solid fa-phone"></i>
+                          </a>
+                          <button
+                            onClick={() => handleDeleteBooking(b.id)}
+                            className="w-7 h-7 bg-rose-600/30 text-rose-400 rounded flex items-center justify-center hover:bg-rose-600 hover:text-white transition"
+                            title="حذف الحجز"
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Manual Booking Modal */}
+          {showManualModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+              <div className="glass-card p-6 rounded-2xl max-w-md w-full space-y-4">
+                <h3 className="font-bold text-lg text-gold-400">إضافة حجز يدوي جديد</h3>
+                <form onSubmit={handleAddManualBooking} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-1">اسم العميل</label>
+                    <input type="text" required value={mName} onChange={(e) => setMName(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-1">رقم الهاتف</label>
+                    <input type="tel" required value={mPhone} onChange={(e) => setMPhone(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white text-right dir-ltr" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-1">الخدمة</label>
+                    <select value={mService?.id} onChange={(e) => setMService(services.find(s => s.id === e.target.value))} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white">
+                      {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.price} ج.م)</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-300 mb-1">التاريخ</label>
+                      <input type="date" value={mDate} onChange={(e) => setMDate(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-300 mb-1">الموعد</label>
+                      <input type="time" value={mTime} onChange={(e) => setMTime(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowManualModal(false)} className="px-4 py-2 bg-dark-800 text-gray-400 rounded-lg text-xs">إلغاء</button>
+                    <button type="submit" className="gold-button px-4 py-2 rounded-lg text-xs font-bold">إضافة الحجز</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // 2. SERVICES PANEL
+    function AdminServicesPanel({ services, setServices, showToast }) {
+      const [showModal, setShowModal] = useState(false);
+      const [editService, setEditService] = useState(null);
+
+      const [name, setName] = useState('');
+      const [category, setCategory] = useState('شعر');
+      const [price, setPrice] = useState(100);
+      const [duration, setDuration] = useState(30);
+      const [image, setImage] = useState('');
+      const [description, setDescription] = useState('');
+
+      const openAddModal = () => {
+        setEditService(null);
+        setName('');
+        setCategory('شعر');
+        setPrice(100);
+        setDuration(30);
+        setImage('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=600&q=80');
+        setDescription('');
+        setShowModal(true);
+      };
+
+      const openEditModal = (srv) => {
+        setEditService(srv);
+        setName(srv.name);
+        setCategory(srv.category);
+        setPrice(srv.price);
+        setDuration(srv.duration);
+        setImage(srv.image);
+        setDescription(srv.description);
+        setShowModal(true);
+      };
+
+      const handleSave = (e) => {
+        e.preventDefault();
+        if (editService) {
+          setServices(services.map(s => s.id === editService.id ? {
+            ...s, name, category, price: Number(price), duration: Number(duration), image, description
+          } : s));
+          showToast('تم تعديل الخدمة بنجاح');
+        } else {
+          setServices([...services, {
+            id: 'srv-' + Date.now(),
+            name, category, price: Number(price), duration: Number(duration), image, description, active: true
+          }]);
+          showToast('تمت إضافة الخدمة الجديدة');
+        }
+        setShowModal(false);
+      };
+
+      const toggleActive = (id) => {
+        setServices(services.map(s => s.id === id ? { ...s, active: !s.active } : s));
+        showToast('تم تغيير حالة الخدمة');
+      };
+
+      const handleDelete = (id) => {
+        if (confirm('هل ترغب بحذف هذه الخدمة؟')) {
+          setServices(services.filter(s => s.id !== id));
+          showToast('تم الحذف بنجاح');
+        }
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="font-extrabold text-xl text-white">إدارة قائمة الخدمات والأسعار</h3>
+            <button onClick={openAddModal} className="gold-button px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
+              <i className="fa-solid fa-plus"></i>
+              <span>إضافة خدمة جديدة</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {services.map(srv => (
+              <div key={srv.id} className="glass-card p-4 rounded-xl flex items-center justify-between border border-dark-700">
+                <div className="flex items-center gap-3">
+                  <img src={srv.image} alt={srv.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <div>
+                    <h4 className="font-bold text-sm text-white">{srv.name}</h4>
+                    <span className="text-xs text-gold-400 font-bold">{srv.price} ج.م</span>
+                    <span className="text-[10px] text-gray-500 mr-2">({srv.duration} د)</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button onClick={() => toggleActive(srv.id)} className={`px-2 py-1 rounded text-[10px] font-bold ${srv.active ? 'bg-emerald-900/40 text-emerald-400' : 'bg-gray-800 text-gray-500'}`}>
+                    {srv.active ? 'مفعلة' : 'معطلة'}
+                  </button>
+                  <button onClick={() => openEditModal(srv)} className="p-1.5 text-gray-400 hover:text-gold-400"><i className="fa-solid fa-pen"></i></button>
+                  <button onClick={() => handleDelete(srv.id)} className="p-1.5 text-gray-400 hover:text-rose-400"><i className="fa-solid fa-trash"></i></button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Modal */}
+          {showModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+              <div className="glass-card p-6 rounded-2xl max-w-md w-full space-y-4">
+                <h3 className="font-bold text-lg text-gold-400">{editService ? 'تعديل خدمة' : 'إضافة خدمة جديدة'}</h3>
+                <form onSubmit={handleSave} className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1">اسم الخدمة</label>
+                    <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-300 mb-1">التصنيف</label>
+                      <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white">
+                        <option value="شعر">شعر</option>
+                        <option value="ذقن">ذقن</option>
+                        <option value="العناية بالبشرة">العناية بالبشرة</option>
+                        <option value="باقات شاملة">باقات شاملة</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-300 mb-1">السعر (ج.م)</label>
+                      <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1">المدة (بالدقائق)</label>
+                    <input type="number" required value={duration} onChange={e => setDuration(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1">رابط الصورة (URL)</label>
+                    <input type="text" required value={image} onChange={e => setImage(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white dir-ltr text-right" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1">الوصف</label>
+                    <textarea rows="2" value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-xs text-white"></textarea>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-dark-800 text-gray-400 rounded-lg text-xs">إلغاء</button>
+                    <button type="submit" className="gold-button px-4 py-2 rounded-lg text-xs font-bold">حفظ البيانات</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 3. CUSTOMERS PANEL
+    function AdminCustomersPanel({ customers, setCustomers, showToast }) {
+      return (
+        <div className="space-y-6">
+          <h3 className="font-extrabold text-xl text-white">قائمة العملاء الدائمين</h3>
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <table className="w-full text-xs text-right">
+              <thead className="bg-dark-800 text-gray-400">
+                <tr>
+                  <th className="p-3">الاسم</th>
+                  <th className="p-3">رقم الهاتف</th>
+                  <th className="p-3">عدد الزيارات</th>
+                  <th className="p-3">إجمالي المدفوعات</th>
+                  <th className="p-3">ملاحظات العميل</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dark-800">
+                {customers.map(c => (
+                  <tr key={c.id}>
+                    <td className="p-3 font-bold text-white">{c.name}</td>
+                    <td className="p-3 font-mono text-gray-300">{c.phone}</td>
+                    <td className="p-3 text-gold-400 font-bold">{c.visits} زيارات</td>
+                    <td className="p-3 text-emerald-400 font-bold">{c.totalSpent} ج.م</td>
+                    <td className="p-3 text-gray-400">{c.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    // 4. GALLERY PANEL
+    function AdminGalleryPanel({ gallery, setGallery, showToast }) {
+      const [title, setTitle] = useState('');
+      const [category, setCategory] = useState('قصات شعر');
+      const [image, setImage] = useState('');
+
+      const handleAddImage = (e) => {
+        e.preventDefault();
+        setGallery([...gallery, {
+          id: 'gal-' + Date.now(),
+          title, category, image
+        }]);
+        showToast('تم إضافة الصورة للمعرض');
+        setTitle('');
+        setImage('');
+      };
+
+      return (
+        <div className="space-y-6">
+          <div className="glass-card p-6 rounded-2xl space-y-4">
+            <h3 className="font-bold text-lg text-gold-400">إضافة صورة جديدة للمعرض</h3>
+            <form onSubmit={handleAddImage} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input type="text" placeholder="عنوان الصورة" required value={title} onChange={e => setTitle(e.target.value)} className="bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white" />
+              <select value={category} onChange={e => setCategory(e.target.value)} className="bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white">
+                <option value="قصات شعر">قصات شعر</option>
+                <option value="تحديد ذقن">تحديد ذقن</option>
+                <option value="قبل وبعد">قبل وبعد</option>
+              </select>
+              <input type="text" placeholder="رابط الصورة (URL)" required value={image} onChange={e => setImage(e.target.value)} className="bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white dir-ltr text-right" />
+              <button type="submit" className="md:col-span-3 gold-button py-2.5 rounded-xl font-bold text-xs">إضافة للمعرض</button>
+            </form>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {gallery.map(item => (
+              <div key={item.id} className="glass-card p-2 rounded-xl relative group">
+                <img src={item.image} alt={item.title} className="w-full h-32 object-cover rounded-lg" />
+                <p className="text-xs font-bold text-white mt-2">{item.title}</p>
+                <button 
+                  onClick={() => {
+                    setGallery(gallery.filter(g => g.id !== item.id));
+                    showToast('تم حذف الصورة');
+                  }}
+                  className="absolute top-3 left-3 bg-rose-600 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition text-xs"
+                >
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // 5. REVIEWS PANEL
+    function AdminReviewsPanel({ reviews, setReviews, showToast }) {
+      const handleToggleApprove = (id) => {
+        setReviews(reviews.map(r => r.id === id ? { ...r, status: r.status === 'approved' ? 'hidden' : 'approved' } : r));
+        showToast('تم تغيير حالة التقييم');
+      };
+
+      return (
+        <div className="space-y-6">
+          <h3 className="font-extrabold text-xl text-white">إدارة تقييمات العملاء</h3>
+          <div className="space-y-3">
+            {reviews.map(rev => (
+              <div key={rev.id} className="glass-card p-4 rounded-xl flex items-center justify-between border border-dark-700">
+                <div>
+                  <h4 className="font-bold text-sm text-white">{rev.name} <span className="text-gold-400 text-xs">({rev.rating} نجوم)</span></h4>
+                  <p className="text-xs text-gray-400 mt-1">"{rev.comment}"</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleApprove(rev.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold ${rev.status === 'approved' ? 'bg-emerald-900/40 text-emerald-400' : 'bg-gray-800 text-gray-400'}`}
+                  >
+                    {rev.status === 'approved' ? 'معروض' : 'مخفي'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReviews(reviews.filter(r => r.id !== rev.id));
+                      showToast('تم حذف التقييم');
+                    }}
+                    className="p-2 text-rose-400 hover:text-rose-300"
+                  >
+                    <i className="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // 6. SETTINGS PANEL
+    function AdminSettingsPanel({ settings, setSettings, showToast }) {
+      const [formData, setFormData] = useState({ ...settings });
+
+      const handleSave = (e) => {
+        e.preventDefault();
+        setSettings(formData);
+        showToast('تم حفظ إعدادات الموقع بنجاح');
+      };
+
+      return (
+        <form onSubmit={handleSave} className="glass-card p-6 rounded-2xl space-y-4 max-w-2xl">
+          <h3 className="font-bold text-lg text-gold-400">إعدادات صالون الحلاق العامة</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-300 mb-1">رقم الهاتف التواصل</label>
+              <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-300 mb-1">رقم الواتساب (بالكود)</label>
+              <input type="text" value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white dir-ltr text-right" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-300 mb-1">العنوان والتفاصيل</label>
+            <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-300 mb-1">العنوان الرئيسي في الواجهة (Hero Title)</label>
+            <input type="text" value={formData.heroTitle} onChange={e => setFormData({ ...formData, heroTitle: e.target.value })} className="w-full bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-300 mb-1">كلمة مرور الأدمن</label>
+            <input type="text" value={formData.adminPass} onChange={e => setFormData({ ...formData, adminPass: e.target.value })} className="w-full bg-dark-800 border border-dark-700 rounded-xl p-2.5 text-xs text-white font-mono" />
+          </div>
+
+          <button type="submit" className="gold-button px-6 py-3 rounded-xl font-bold text-xs shadow">
+            حفظ التغييرات
+          </button>
+        </form>
+      );
+    }
+
+    // Render React Application
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
