@@ -239,7 +239,7 @@
         const b = {
           clientId: pick(bp, ['client_id', 'customer_id'], 'client_id'),
           serviceId: pick(bp, ['service_id'], 'service_id'),
-          date: pick(bp, ['booking_date', 'date', 'appointment_date', 'day'], 'booking_date'),
+          date: pick(bp, ['booking_time', 'date', 'appointment_date', 'day'], 'booking_date'),
           time: pick(bp, ['booking_time', 'time', 'appointment_time'], 'booking_time'),
           ts: pick(bp, ['scheduled_at', 'appointment_at', 'booking_at', 'start_at', 'starts_at', 'start_time', 'datetime', 'date_time', 'booked_at'], null),
           status: pick(bp, ['status', 'state'], 'status'),
@@ -251,7 +251,7 @@
           createdAt: pick(bp, ['created_at'], null)
         };
         if (bp && b.date && b.time === null) b.time = null;
-        if (bp && b.ts && !pick(bp, ['booking_date', 'date', 'appointment_date', 'day'], null)) { b.date = null; b.time = null; }
+        if (bp && b.ts && !pick(bp, ['booking_time', 'date', 'appointment_date', 'day'], null)) { b.date = null; b.time = null; }
         const c = {
           name: pick(cp, ['name', 'full_name', 'customer_name'], 'name'),
           phone: pick(cp, ['phone', 'mobile', 'phone_number'], 'phone')
