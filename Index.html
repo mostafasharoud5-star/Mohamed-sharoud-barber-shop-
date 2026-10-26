@@ -462,13 +462,6 @@
       { id: 'rev-3', name: 'كابتن محمود رزق', rating: 5, comment: 'الصالون نظيف جدا والأدوات معقمة بانتظام. الحجز أونلاين وفر عليا وقت كتير.', status: 'approved', date: '2026-10-20' }
     ];
 
-    const INITIAL_BOOKINGS = [
-      { id: 'BK-1001', customerName: 'أحمد فهمي', phone: '01012345678', serviceId: 'srv-1', serviceName: 'قص شعر وتصفيف VIP', price: 150, date: '2026-10-21', time: '16:00', status: 'مؤكد', notes: 'يرجى التركيز على التحديد' },
-      { id: 'BK-1002', customerName: 'عمر الشريف', phone: '01123456789', serviceId: 'srv-3', serviceName: 'باكج الشروود الملكي', price: 350, date: '2026-10-21', time: '18:00', status: 'معلق', notes: 'مناسبة خاصة' },
-      { id: 'BK-1003', customerName: 'مصطفى كامل', phone: '01234567890', serviceId: 'srv-2', serviceName: 'تحديد وتنظيف ذقن بالموس', price: 100, date: '2026-10-20', time: '15:00', status: 'مكتمل', notes: '' },
-      { id: 'BK-1004', customerName: 'يوسف العبد', phone: '01512345678', serviceId: 'srv-4', serviceName: 'تنظيف بشرة هيدرافيسيال', price: 250, date: '2026-10-22', time: '19:30', status: 'مؤكد', notes: '' }
-    ];
-
     const INITIAL_CUSTOMERS = [
       { id: 'c-1', name: 'أحمد فهمي', phone: '01012345678', visits: 5, totalSpent: 750, notes: 'يفضل الشاي خفيف، والقص كلاسيك' },
       { id: 'c-2', name: 'عمر الشريف', phone: '01123456789', visits: 2, totalSpent: 500, notes: 'عميل جديد - يفضل المواعيد المسائية' },
@@ -519,7 +512,7 @@
       const [services, setServices] = useState(() => getStoredData('services', INITIAL_SERVICES));
       const [gallery, setGallery] = useState(() => getStoredData('gallery', INITIAL_GALLERY));
       const [reviews, setReviews] = useState(() => getStoredData('reviews', INITIAL_REVIEWS));
-      const [bookings, setBookings] = useState(() => getStoredData('bookings', INITIAL_BOOKINGS));
+      const [bookings, setBookings] = useState([]); // الاعتماد كلياً على سوبابيس للحجوزات فقط
       const [customers, setCustomers] = useState(() => getStoredData('customers', INITIAL_CUSTOMERS));
       const [settings, setSettings] = useState(() => getStoredData('settings', INITIAL_SETTINGS));
 
@@ -542,22 +535,11 @@
       useEffect(() => {
         let cancelled = false;
         const run = async () => {
-          // retry bookings that could not be saved online earlier
-          const pending = bookingsRef.current.filter(x => x.pendingSync && !x.remoteId);
-          for (const p of pending) {
-            const r = await DB.createBooking(p, servicesRef.current, { skipConflict: true });
-            if (r.ok && !cancelled) setBookings(cur => cur.map(x => x.id === p.id ? { ...x, pendingSync: false, synced: true } : x));
-          }
           const res = await DB.fetchAll();
           if (cancelled) return;
           if (!res.ok) { console.warn('Supabase bookings:', res.error); setDbStatus({ ok: false, msg: res.error }); return; }
           setDbStatus({ ok: true });
-          setBookings(cur => {
-            const keyOf = (b) => [b.phone, b.date, b.time].join('|');
-            const remoteKeys = new Set(res.list.map(keyOf));
-            const localOnly = cur.filter(b => !b.remoteId && !remoteKeys.has(keyOf(b)));
-            return [...res.list.map(({ _sort, ...rest }) => rest), ...localOnly];
-          });
+          setBookings(res.list.map(({ _sort, ...rest }) => rest));
         };
         run();
         const timer = setInterval(run, 30000);
@@ -569,7 +551,6 @@
       useEffect(() => { setStoredData('services', services); }, [services]);
       useEffect(() => { setStoredData('gallery', gallery); }, [gallery]);
       useEffect(() => { setStoredData('reviews', reviews); }, [reviews]);
-      useEffect(() => { setStoredData('bookings', bookings); }, [bookings]);
       useEffect(() => { setStoredData('customers', customers); }, [customers]);
       useEffect(() => { setStoredData('settings', settings); }, [settings]);
 
@@ -590,8 +571,10 @@
             const p = prevMap.get(b.id);
             if (!p) {
               const r = await DB.createBooking(b, servicesRef.current, { skipConflict: true });
-              if (r.ok) setBookings(cur => cur.map(x => x.id === b.id ? { ...x, synced: true } : x));
-              else { setBookings(cur => cur.map(x => x.id === b.id ? { ...x, pendingSync: true } : x)); showToast('الحجز اتحفظ على الجهاز فقط: ' + r.error, 'error'); }
+              if (r.ok) {
+                const refreshed = await DB.fetchAll();
+                if (refreshed.ok) setBookings(refreshed.list.map(({ _sort, ...rest }) => rest));
+              } else { showToast('تعذر الحفظ أونلاين: ' + r.error, 'error'); }
             } else if (p.status !== b.status && b.remoteId) {
               const r = await DB.updateStatus(b.remoteId, b.status);
               if (!r.ok) showToast('تعذر تحديث الحالة أونلاين: ' + r.error, 'error');
@@ -784,9 +767,13 @@
                 onBookingCreated={async (newBk) => {
                   const remote = await DB.createBooking(newBk, services);
                   if (remote.conflict) return remote;
-                  newBk = remote.ok ? { ...newBk, synced: true } : { ...newBk, pendingSync: true };
-                  setBookings(cur => [newBk, ...cur]);
                   
+                  // جلب الحجوزات المحدثة مباشرة من سوبابيس لضمان عدم وجود أوردرات فارغة
+                  const refreshed = await DB.fetchAll();
+                  if (refreshed.ok) {
+                    setBookings(refreshed.list.map(({ _sort, ...rest }) => rest));
+                  }
+
                   // Auto update or add customer
                   const existingCustIndex = customers.findIndex(c => c.phone === newBk.phone);
                   if (existingCustIndex >= 0) {
@@ -806,7 +793,7 @@
                   }
 
                   if (remote.ok) showToast('تم حجز الموعد وحفظه أونلاين بنجاح!');
-                  else showToast('تم الحجز لكن لم يُحفظ أونلاين: ' + remote.error, 'error');
+                  else showToast('فشل حفظ الحجز أونلاين: ' + remote.error, 'error');
                   return remote;
                 }}
                 settings={settings}
@@ -1618,17 +1605,14 @@
                 <h3 className="text-2xl font-extrabold text-white">تم استلام طلب الحجز بنجاح!</h3>
                 <p className="text-xs text-gray-400">كود الحجز المرجعي: <span className="text-gold-400 font-mono font-bold">{confirmedBooking.id}</span></p>
                 {confirmedBooking.synced
-                  ? <p className="text-xs text-emerald-400 font-bold">✓ تم حفظ الحجز أونلاين</p>
-                  : <p className="text-xs text-amber-400 font-bold">⚠ تم حفظ الحجز على جهازك فقط، وسيُعاد المحاولة تلقائياً. أرسل التفاصيل عبر واتساب للتأكيد.</p>}
-                {!confirmedBooking.synced && confirmedBooking.syncError && (
-                  <p dir="ltr" className="text-[11px] text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg p-2 break-words">سبب الفشل: {confirmedBooking.syncError}</p>
-                )}
+                  ? <p className="text-xs text-emerald-400 font-bold">✓ تم حفظ الحجز أونلاين في قاعدة البيانات</p>
+                  : <p className="text-xs text-rose-400 font-bold">⚠ فشل حفظ الحجز أونلاين: {confirmedBooking.syncError}</p>}
               </div>
 
               <div className="bg-dark-800 p-4 rounded-xl border border-gold-500/20 text-right space-y-2 text-xs max-w-md mx-auto">
                 <p className="text-gray-300"><strong className="text-white">الاسم:</strong> {confirmedBooking.customerName}</p>
                 <p className="text-gray-300"><strong className="text-white">الخدمة:</strong> {confirmedBooking.serviceName}</p>
-                <p className="text-gray-300"><strong className="text-white">الموعد:</strong> {confirmedBooking.time} الساعة {confirmedBooking.time}</p>
+                <p className="text-gray-300"><strong className="text-white">الموعد:</strong> {confirmedBooking.date} الساعة {confirmedBooking.time}</p>
                 <p className="text-gray-300"><strong className="text-white">المبلغ المطلوب:</strong> {confirmedBooking.price} ج.م</p>
               </div>
 
@@ -2186,7 +2170,7 @@
                       <td className="p-3 font-bold text-white">{b.customerName}</td>
                       <td className="p-3 font-mono text-gray-300 dir-ltr text-right">{b.phone}</td>
                       <td className="p-3 text-gray-300">{b.serviceName}</td>
-                      <td className="p-3 text-gray-300">{b.time} ({b.time})</td>
+                      <td className="p-3 text-gray-300">{b.date} ({b.time})</td>
                       <td className="p-3 font-bold text-gold-400">{b.price} ج.م</td>
                       <td className="p-3">
                         <select
