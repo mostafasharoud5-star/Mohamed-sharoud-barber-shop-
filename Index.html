@@ -212,7 +212,6 @@
         state.schemaPromise = (async () => {
           const out = { tables: {}, errors: {} };
           try {
-            // the OpenAPI spec is restricted for new-style publishable keys (would only log a 401), so skip it
             if (/^sb_publishable_/.test(SUPABASE_ANON_KEY)) throw new Error('skip openapi');
             const r = await plainFetch(SUPABASE_URL + '/rest/v1/', { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY } });
             if (r.ok) {
@@ -239,9 +238,9 @@
         const b = {
           clientId: pick(bp, ['client_id', 'customer_id'], 'client_id'),
           serviceId: pick(bp, ['service_id'], 'service_id'),
-          date: pick(bp, ['booking_time', 'date', 'appointment_date', 'day'], 'booking_date'),
-          time: pick(bp, ['booking_time', 'time', 'appointment_time'], 'booking_time'),
-          ts: pick(bp, ['scheduled_at', 'appointment_at', 'booking_at', 'start_at', 'starts_at', 'start_time', 'datetime', 'date_time', 'booked_at'], null),
+          date: pick(bp, ['date', 'appointment_date', 'day'], null),
+          time: pick(bp, ['time', 'appointment_time'], null),
+          ts: pick(bp, ['booking_time', 'appointment_at', 'booking_at', 'start_at', 'starts_at', 'start_time', 'datetime', 'date_time', 'booked_at'], 'booking_time'),
           status: pick(bp, ['status', 'state'], 'status'),
           notes: pick(bp, ['notes', 'note', 'comments'], bp ? null : 'notes'),
           price: pick(bp, ['price', 'total', 'amount', 'total_price'], null),
@@ -250,8 +249,6 @@
           serviceName: pick(bp, ['service_name'], null),
           createdAt: pick(bp, ['created_at'], null)
         };
-        if (bp && b.date && b.time === null) b.time = null;
-        if (bp && b.ts && !pick(bp, ['booking_time', 'date', 'appointment_date', 'day'], null)) { b.date = null; b.time = null; }
         const c = {
           name: pick(cp, ['name', 'full_name', 'customer_name'], 'name'),
           phone: pick(cp, ['phone', 'mobile', 'phone_number'], 'phone')
@@ -284,10 +281,12 @@
         let date = '', time = '';
         if (m.b.date && row[m.b.date]) date = String(row[m.b.date]).slice(0, 10);
         if (m.b.time && row[m.b.time]) time = String(row[m.b.time]).slice(0, 5);
-        if (!time && m.b.ts && /^\d{2}:\d{2}/.test(String(row[m.b.ts] || ''))) time = String(row[m.b.ts]).slice(0, 5);
-        if ((!date || !time) && m.b.ts && row[m.b.ts] && !/^\d{2}:\d{2}/.test(String(row[m.b.ts]))) {
+        if ((!date || !time) && m.b.ts && row[m.b.ts]) {
           const d = new Date(row[m.b.ts]);
-          if (!isNaN(d)) { date = date || `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; time = time || `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+          if (!isNaN(d)) { 
+            date = date || `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; 
+            time = time || `${pad(d.getHours())}:${pad(d.getMinutes())}`; 
+          }
         }
         const svcPrice = s.price != null ? Number(s.price) : 0;
         return {
@@ -328,7 +327,7 @@
           }
           const m = maps(schema);
 
-          // 1) prevent double booking across devices
+          // 1) منع الحجز المزدوج لنفس التاريخ والوقت
           if (!opts.skipConflict) {
             const cur = await fetchAll();
             if (cur.ok && cur.list.some(r => r.date === bk.date && r.time === bk.time && r.status !== 'ملغي')) {
@@ -338,7 +337,7 @@
 
           const payload = {};
 
-          // 2) client row (find by phone or create)
+          // 2) ربط العميل بجدول العملاء الفرعي
           if (m.b.clientId) {
             let clientId = null;
             const f = await sb.from('clients').select('*').eq(m.c.phone, bk.phone).limit(1);
@@ -354,26 +353,28 @@
             payload[m.b.clientId] = clientId;
           }
 
-          // 3) service id (match by name in services table)
+          // 3) ربط الخدمة بجدول الخدمات الفرعي
           if (m.b.serviceId) {
             const sv = await sb.from('services').select('*');
             if (!sv.error && sv.data) {
               const norm = (x) => String(x || '').trim();
               const hit = sv.data.find(r => norm(r[m.s.name]) === norm(bk.serviceName));
               if (hit) payload[m.b.serviceId] = hit.id;
-              else if (m.bp && !('service_id' in m.bp)) { /* column not present */ }
             }
           }
 
-          // 4) the rest of the columns (only the ones that exist)
-          if (m.b.date && m.b.time) { payload[m.b.date] = bk.date; payload[m.b.time] = bk.time; }
-          else if (m.b.date && !m.b.ts) { payload[m.b.date] = bk.date; }
-          else if (m.b.date && m.b.ts) {
-            payload[m.b.date] = bk.date;
-            const f = String((m.bp && m.bp[m.b.ts] && m.bp[m.b.ts].format) || '');
-            payload[m.b.ts] = /timestamp/.test(f) ? new Date(`${bk.date}T${bk.time}:00`).toISOString() : bk.time;
+          // 4) توحيد صيغة الوقت والتاريخ كـ ISO Timestamp مع إرسال القيم المنفصلة
+          const unifiedTimestamp = new Date(`${bk.date}T${bk.time}:00`).toISOString();
+
+          if (m.b.ts) {
+            payload[m.b.ts] = unifiedTimestamp;
+          } else {
+            payload['booking_time'] = unifiedTimestamp;
           }
-          else if (m.b.ts) { payload[m.b.ts] = new Date(`${bk.date}T${bk.time}:00`).toISOString(); }
+
+          if (m.b.date) payload[m.b.date] = bk.date;
+          if (m.b.time) payload[m.b.time] = bk.time;
+
           if (m.b.notes) payload[m.b.notes] = bk.notes || '';
           if (m.b.price) payload[m.b.price] = bk.price;
           if (m.b.name) payload[m.b.name] = bk.customerName;
@@ -1632,7 +1633,7 @@
               <div className="bg-dark-800 p-4 rounded-xl border border-gold-500/20 text-right space-y-2 text-xs max-w-md mx-auto">
                 <p className="text-gray-300"><strong className="text-white">الاسم:</strong> {confirmedBooking.customerName}</p>
                 <p className="text-gray-300"><strong className="text-white">الخدمة:</strong> {confirmedBooking.serviceName}</p>
-                <p className="text-gray-300"><strong className="text-white">الموعد:</strong> {confirmedBooking.date} الساعة {confirmedBooking.time}</p>
+                <p className="text-gray-300"><strong className="text-white">الموعد:</strong> {confirmedBooking.time} الساعة {confirmedBooking.time}</p>
                 <p className="text-gray-300"><strong className="text-white">المبلغ المطلوب:</strong> {confirmedBooking.price} ج.م</p>
               </div>
 
@@ -2190,7 +2191,7 @@
                       <td className="p-3 font-bold text-white">{b.customerName}</td>
                       <td className="p-3 font-mono text-gray-300 dir-ltr text-right">{b.phone}</td>
                       <td className="p-3 text-gray-300">{b.serviceName}</td>
-                      <td className="p-3 text-gray-300">{b.date} ({b.time})</td>
+                      <td className="p-3 text-gray-300">{b.time} ({b.time})</td>
                       <td className="p-3 font-bold text-gold-400">{b.price} ج.م</td>
                       <td className="p-3">
                         <select
